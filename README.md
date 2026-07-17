@@ -160,7 +160,7 @@ pnpm dev
 ### Sprint Progress
 
 - **✅ Sprint 0** – Infrastructure & Foundation
-- **⏳ Sprint 1** – Authentication & Organizations
+- **🚧 Sprint 1** – Authentication & Organizations (In Progress)
 - **⏳ Sprint 2** – File Management
 - **⏳ Sprint 3** – AI Knowledge Base
 - **⏳ Sprint 4** – AI Agents

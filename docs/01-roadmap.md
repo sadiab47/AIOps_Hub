@@ -10,7 +10,7 @@ The AIOps Hub product roadmap is structured into 6 distinct Sprints, moving from
 - Establish shared Prisma client package.
 - Bootstrap NestJS & Next.js skeletons with validation/logging pipelines.
 
-### ⏳ Sprint 1: Authentication & Organizations
+### 🚧 Sprint 1: Authentication & Organizations (In Progress)
 - Cookie-based session auth and bearer tokens hybrid design.
 - Organization CRUD and context routing.
 - Role-Based Access Control (RBAC).
