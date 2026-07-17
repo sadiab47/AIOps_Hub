@@ -1,106 +1,77 @@
-# AIOps Hub
+# 🚀 AIOps Hub
 
-```text
-  █████╗ ██╗ ██████╗ ██████╗ ███████╗    ██╗  ██╗██╗   ██╗██████╗ 
- ██╔══██╗██║██╔═══██╗██╔══██╗██╔════╝    ██║  ██║██║   ██║██╔══██╗
- ███████║██║██║   ██║██████╔╝███████╗    ███████║██║   ██║██████╔╝
- ██╔══██║██║██║   ██║██╔═══╝ ╚════██║    ██╔══██║██║   ██║██╔══██╗
- ██║  ██║██║╚██████╔╝██║     ███████║    ██║  ██║╚██████╔╝██████╔╝
- ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚══════╝    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ 
-```
+> **Production-Ready AI Automation Platform for Modern Businesses**
 
-*Production-ready, multi-tenant AI Automation Platform built with Next.js, NestJS, Prisma, PostgreSQL, Redis, LangGraph, and OpenAI.*
+Build AI-powered knowledge bases, intelligent assistants, workflow automations, and enterprise business applications on a scalable, multi-tenant architecture.
+
+Designed for production from day one.
 
 ---
 
-[![CI Build Status](https://github.com/sadiab47/AIOps_Hub/actions/workflows/ci.yml/badge.svg)](https://github.com/sadiab47/AIOps_Hub/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node Version](https://img.shields.io/badge/Node-Check%20%3E%3D22.0.0-blue.svg)](https://nodejs.org)
-[![Package Manager](https://img.shields.io/badge/pnpm-v11.x-orange.svg)](https://pnpm.io)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/sadiab47/AIOps_Hub/pulls)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## 🎯 Project Vision
+## 🎯 Vision
 
 AIOps Hub is an enterprise-grade, multi-tenant Software-as-a-Service (SaaS) platform designed for workflow automation, custom AI agents, knowledge bases, and advanced operational integrations. Built with a robust modular monolith architecture, this codebase serves as a world-class foundation for premium AI consulting projects.
 
 ---
 
-## 🏛️ System Architecture
+## ⚡ Features
+
+* **✅ Enterprise Authentication**: Hybrid authentication supporting secure HTTP-only cookies for web apps and Bearer JWTs for APIs, CLIs, and agents.
+* **✅ Multi-Tenant Organizations**: Complete logical separation of tenants with separate workspaces and contexts.
+* **✅ Role Based Access Control**: Granular permission hierarchies (Owner, Admin, Manager, Member, Viewer).
+* **✅ AI Knowledge Base**: Embeddings generation, RAG, and document search.
+* **✅ AI Chat**: Direct conversational assistant with detailed citations.
+* **✅ AI Agents**: Stateful multi-agent workflows orchestrating business logic.
+* **✅ Workflow Automation**: Custom sequence design and automated integrations.
+* **✅ Document Intelligence**: Automated document parsing, extraction, and structure parsing.
+* **✅ Background Jobs**: High-throughput queues powered by BullMQ.
+* **✅ REST APIs**: Explicitly versioned (`/api/v1`) REST endpoints.
+* **✅ Docker**: Containerized Postgres & Redis for reproducible local runtimes.
+* **✅ CI/CD**: Automatic linting, type-checking, and build validation on GitHub Actions.
+* **✅ Enterprise Logging**: Structured JSON logging powered by Pino and nestjs-pino.
+
+---
+
+## 🏛️ Architecture
 
 ```text
-                    Browser
-                       │
-                Next.js Frontend
-                       │
-               NestJS REST API
-                       │
-      ┌───────────────┼───────────────┐
-      │               │               │
- PostgreSQL        Redis          OpenAI
-      │               │               │
-      └──────── Prisma ───────────────┘
+                       Browser
+                           │
+                    Next.js Frontend
+                           │
+                    REST API (NestJS)
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+   PostgreSQL           Redis            OpenAI
+        │                  │                  │
+        └────────────── Prisma ───────────────┘
 ```
 
-### Future Architectural Extensions
-
-Later, our architecture will expand to support:
-- **Qdrant** (Vector Database for RAG & semantic search)
-- **LangGraph** (Stateful multi-agent orchestration workflows)
-- **MCP** (Model Context Protocol for tool integration)
-- **BullMQ Workers** (High-throughput background jobs processing)
-- **S3 Storage** (Secure object storage for tenant documents)
-
 ---
 
-## 🚀 Key Features
+## 📂 Repository Structure
 
-* **Multi-Tenant from Day 1**: Full logical tenant separation utilizing PostgreSQL schemas, membership roles, and custom workspace contexts.
-* **DDD-Lite Architecture**: Structured using a Controller -> Service -> Repository layer pattern in NestJS to keep the business core isolated from the Prisma ORM.
-* **Hybrid Authentication**: Secure HTTP-only cookies for the Next.js web application, paired with Bearer JWT tokens for future API, CLI, and integration access.
-* **Soft Deletes & Auditing**: Strict database lifecycle tracking (`createdAt`, `updatedAt`, `deletedAt`) and an early audit log module recording admin activities.
-* **API Versioning**: Scalable endpoint schema starting with `/api/v1` default versioning.
-* **Strict Validation**: Mandatory Zod verification for system configurations and `class-validator` schema compliance for DTO payloads.
-
----
-
-## 🛠️ Tech Stack
-
-* **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, Lucide Icons, TanStack Query, Zustand.
-* **Backend**: NestJS, Prisma Client, `@nestjs/terminus` (Health checks).
-* **AI (Sprint 3+)**: OpenAI Responses API, LangGraph, MCP, Qdrant.
-* **DevOps & DB**: Docker, PostgreSQL 16, Redis 7, GitHub Actions CI/CD.
-
----
-
-## 📂 Repository Workspace Structure
-
-We manage the project as a Turborepo monorepo with `pnpm` workspaces:
-
-```text
-aiops-hub/
-├── .github/
-│   ├── ISSUE_TEMPLATE/    # Bug, feature, and arch markdown templates
-│   └── workflows/         # Github Action CI pipelines
-├── apps/
-│   ├── api/               # NestJS API (Port 3001)
-│   └── web/               # Next.js 15 App (Port 3000)
-├── packages/
-│   ├── db/                # Shared Prisma client, migrations & schema
-│   ├── tsconfig/          # Shared typescript compiler profiles
-│   └── eslint-config/     # Shared linting configs
-├── infra/
-│   └── docker/            # Docker Compose services (Postgres, Redis)
-├── docs/
-│   ├── ADR/               # Architecture Decision Records
-│   ├── architecture/      # Architectural deep-dives
-│   ├── database/          # Database schemas and design
-│   ├── api/               # API contract specifications
-│   └── deployment/        # Staging and production deployment guides
-├── scripts/               # Utility scripts (GitHub label configs, etc.)
-└── package.json           # Monorepo root config
-```
+* **`apps/`**: The core executable applications:
+  * **`apps/web`**: Next.js 15 frontend application.
+  * **`apps/api`**: NestJS backend REST API application.
+* **`packages/`**: Reusable workspace packages:
+  * **`packages/db`**: Prisma schema, migration configurations, and client exports.
+  * **`packages/tsconfig`**: Shared TypeScript compiler configs.
+  * **`packages/eslint-config`**: Shared linting and code quality configs.
+* **`infra/`**: DevOps assets:
+  * **`infra/docker`**: Local Docker Compose environment configuration.
+* **`docs/`**: Production-grade architectural documentation, ADRs, and guides.
+* **`scripts/`**: Utility automation (labels configuration, setup scripts).
 
 ---
 
@@ -111,75 +82,59 @@ aiops-hub/
 - pnpm >= 11.0.0
 - Docker Desktop
 
-### 1. Installation
-Install workspace dependencies and link modules:
+### 1. Clone & Install
 ```bash
+git clone https://github.com/sadiab47/AIOps_Hub.git
+cd AIOps_Hub
 pnpm install
 ```
 
-### 2. Infrastructure Setup
-Spin up the local PostgreSQL database and Redis caches:
+### 2. Start Docker Services
 ```bash
 docker compose -f infra/docker/docker-compose.yml up -d
 ```
 
-### 3. Database Sync & Generate
-Synchronize your local Postgres instance and compile the shared Prisma client:
+### 3. Generate Database Client & Run Migrations
 ```bash
 pnpm --filter @aiops-hub/db db:migrate
 pnpm --filter @aiops-hub/db db:generate
 ```
 
-### 4. Running Locally
-Start both backend and frontend servers in development mode:
+### 4. Start Development Mode
 ```bash
 pnpm dev
 ```
-- **Web App**: `http://localhost:3000`
-- **Backend API**: `http://localhost:3001/api/v1/health`
 
 ---
 
 ## 📅 Roadmap
 
-### 🏁 Sprint 0: Infrastructure & Foundation (Complete)
-- [x] Initialized monorepo workspace & Turborepo pipelines.
-- [x] Configured PostgreSQL & Redis local environments via Docker.
-- [x] Implemented global validation, Pino logging, and environment schemas.
-- [x] Established `@aiops-hub/db` Prisma package (UUIDs, soft deletes).
-- [x] Implemented API Versioning and `/api/v1/health` check endpoint.
+### Sprint Progress
 
-### 🔑 Sprint 1: Authentication & Organizations (Upcoming)
-- [ ] User register & hybrid login (JWT-cookies / API bearer tokens).
-- [ ] Multi-tenant Organization context switching.
-- [ ] Role-Based Access Control (RBAC) definitions.
-- [ ] Audit Log recording services.
-
-### 📁 Sprint 2: Files & Background Jobs
-- [ ] Tenant S3 File upload integration.
-- [ ] Document parsing engine module.
-- [ ] Background job worker queues using BullMQ.
-
-### 🧠 Sprint 3: Vector Search & AI Chat
-- [ ] Qdrant Vector database setup.
-- [ ] Embeddings creation & RAG indexers.
-- [ ] AI chat interface with metadata citations.
-
-### 🤖 Sprint 4: AI Agents & Custom Workflows
-- [ ] LangGraph multi-agent orchestration.
-- [ ] Prompt templates library & system memory.
+- **✅ Sprint 0** – Infrastructure & Foundation
+- **⏳ Sprint 1** – Authentication & Organizations
+- **⏳ Sprint 2** – File Management
+- **⏳ Sprint 3** – AI Knowledge Base
+- **⏳ Sprint 4** – AI Agents
+- **⏳ Sprint 5** – Workflow Automation
+- **⏳ Sprint 6** – Production Deployment
 
 ---
 
-## 📸 Screenshots
+## 📖 Documentation
 
-*Screenshots will be added as features are developed in upcoming sprints.*
+* [Vision Document](docs/00-vision.md)
+* [System Architecture](docs/03-system-architecture.md)
+* [Database Design](docs/04-database-design.md)
+* [API Specification](docs/05-api-specification.md)
+* [Architecture Decision Records (ADRs)](docs/ADR/README.md)
+* [Deployment Guide](docs/10-deployment.md)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to align on our coding standards, branch conventions (`feat/`, `fix/`), and conventional commit message structures.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to align on our coding standards, branch conventions, and conventional commit message structures.
 
 ## 📄 License
 

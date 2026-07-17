@@ -4,7 +4,7 @@ const LABELS = [
   { name: 'backend', color: '0052cc', description: 'Server-side / API issues or features' },
   { name: 'frontend', color: '1d76db', description: 'Client-side / web application UI' },
   { name: 'database', color: 'bfd4f2', description: 'Database schema, queries, or migrations' },
-  { name: 'infra', color: '5319e7', description: 'Infrastructure, docker, docker-compose, or devops' },
+  { name: 'enhancement', color: 'a2eeef', description: 'Minor improvement or feature request extension' },
   { name: 'security', color: 'e11d21', description: 'Vulnerabilities or security enhancements' },
   { name: 'documentation', color: '0075ca', description: 'Improvements or additions to documentation' },
   { name: 'architecture', color: '7057ff', description: 'System design and structural proposals' },
