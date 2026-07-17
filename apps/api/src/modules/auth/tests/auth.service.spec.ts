@@ -3,19 +3,16 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { UsersService } from '../../users/services/users.service';
 import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
-import { REFRESH_TOKEN_REPOSITORY_TOKEN, RefreshTokenRepositoryInterface } from '../repositories/refresh-token-repository.interface';
 import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../../common/database/audit-log-repository.interface';
 import { PasswordService } from '../../../common/auth/password.service';
-import { TokenService } from '../../../common/auth/token.service';
-import * as crypto from 'crypto';
+import { SessionService } from '../services/session.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let userRepository: jest.Mocked<UserRepositoryInterface>;
   let passwordService: jest.Mocked<PasswordService>;
-  let tokenService: jest.Mocked<TokenService>;
-  let refreshTokenRepository: jest.Mocked<RefreshTokenRepositoryInterface>;
+  let sessionService: jest.Mocked<SessionService>;
   let auditLogRepository: jest.Mocked<AuditLogRepositoryInterface>;
 
   beforeEach(async () => {
@@ -34,17 +31,12 @@ describe('AuthService', () => {
       hash: jest.fn(),
       compare: jest.fn(),
     };
-    const mockTokenService = {
-      generateAccess: jest.fn(),
-      generateRefresh: jest.fn(),
-      verify: jest.fn(),
-    };
-    const mockRefreshTokenRepository = {
-      create: jest.fn(),
-      findByTokenHash: jest.fn(),
-      revoke: jest.fn(),
-      revokeAllByUser: jest.fn(),
-      deleteExpired: jest.fn(),
+    const mockSessionService = {
+      createSession: jest.fn(),
+      revokeSession: jest.fn(),
+      revokeAllSessions: jest.fn(),
+      findSession: jest.fn(),
+      cleanupExpiredSessions: jest.fn(),
     };
     const mockAuditLogRepository = {
       create: jest.fn(),
@@ -56,8 +48,7 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: mockUsersService },
         { provide: USER_REPOSITORY_TOKEN, useValue: mockUserRepository },
         { provide: PasswordService, useValue: mockPasswordService },
-        { provide: TokenService, useValue: mockTokenService },
-        { provide: REFRESH_TOKEN_REPOSITORY_TOKEN, useValue: mockRefreshTokenRepository },
+        { provide: SessionService, useValue: mockSessionService },
         { provide: AUDIT_LOG_REPOSITORY_TOKEN, useValue: mockAuditLogRepository },
       ],
     }).compile();
@@ -66,8 +57,7 @@ describe('AuthService', () => {
     usersService = module.get(UsersService);
     userRepository = module.get(USER_REPOSITORY_TOKEN);
     passwordService = module.get(PasswordService);
-    tokenService = module.get(TokenService);
-    refreshTokenRepository = module.get(REFRESH_TOKEN_REPOSITORY_TOKEN);
+    sessionService = module.get(SessionService);
     auditLogRepository = module.get(AUDIT_LOG_REPOSITORY_TOKEN);
   });
 
@@ -98,8 +88,11 @@ describe('AuthService', () => {
 
       passwordService.hash.mockResolvedValue('hashed_password');
       usersService.create.mockResolvedValue(mockUser);
-      tokenService.generateAccess.mockResolvedValue('mock_access_token');
-      tokenService.generateRefresh.mockResolvedValue('mock_refresh_token');
+      sessionService.createSession.mockResolvedValue({
+        accessToken: 'mock_access_token',
+        refreshToken: 'mock_refresh_token',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      });
 
       const result = await service.register(dto);
 
@@ -110,20 +103,17 @@ describe('AuthService', () => {
         name: dto.name,
       });
 
-      expect(tokenService.generateAccess).toHaveBeenCalled();
-      expect(tokenService.generateRefresh).toHaveBeenCalled();
-      expect(refreshTokenRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: mockUser.id,
-          tokenHash: crypto.createHash('sha256').update('mock_refresh_token').digest('hex'),
-        }),
-      );
+      expect(sessionService.createSession).toHaveBeenCalledWith(mockUser.id, mockUser.email, null, null);
 
       expect(result.user).toEqual({
         id: mockUser.id,
         email: mockUser.email,
         name: mockUser.name,
         createdAt: mockUser.createdAt,
+      });
+      expect(result.tokens).toEqual({
+        accessToken: 'mock_access_token',
+        refreshToken: 'mock_refresh_token',
       });
     });
   });
@@ -150,14 +140,18 @@ describe('AuthService', () => {
 
       usersService.findByEmail.mockResolvedValue(mockUser);
       passwordService.compare.mockResolvedValue(true);
-      tokenService.generateAccess.mockResolvedValue('mock_access_token');
-      tokenService.generateRefresh.mockResolvedValue('mock_refresh_token');
+      sessionService.createSession.mockResolvedValue({
+        accessToken: 'mock_access_token',
+        refreshToken: 'mock_refresh_token',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      });
 
       const result = await service.login(dto, '127.0.0.1', 'Mozilla/5.0');
 
       expect(usersService.findByEmail).toHaveBeenCalledWith(dto.email);
       expect(passwordService.compare).toHaveBeenCalledWith(dto.password, mockUser.passwordHash);
       expect(userRepository.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
+      expect(sessionService.createSession).toHaveBeenCalledWith(mockUser.id, mockUser.email, '127.0.0.1', 'Mozilla/5.0');
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,

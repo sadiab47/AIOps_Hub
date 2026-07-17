@@ -7,6 +7,8 @@ import { REFRESH_TOKEN_REPOSITORY_TOKEN } from './repositories/refresh-token-rep
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { CommonAuthModule } from '../../common/auth/common-auth.module';
 
+import { SessionService } from './services/session.service';
+
 @Module({
   imports: [
     UsersModule,
@@ -16,6 +18,7 @@ import { CommonAuthModule } from '../../common/auth/common-auth.module';
   controllers: [AuthController],
   providers: [
     AuthService,
+    SessionService,
     {
       provide: REFRESH_TOKEN_REPOSITORY_TOKEN,
       useClass: RefreshTokenRepository,

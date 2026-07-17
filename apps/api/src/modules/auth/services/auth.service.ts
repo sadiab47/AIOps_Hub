@@ -1,13 +1,11 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
-import * as crypto from 'crypto';
 import { UsersService } from '../../users/services/users.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
-import { REFRESH_TOKEN_REPOSITORY_TOKEN, RefreshTokenRepositoryInterface } from '../repositories/refresh-token-repository.interface';
 import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
 import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../../common/database/audit-log-repository.interface';
 import { PasswordService } from '../../../common/auth/password.service';
-import { TokenService } from '../../../common/auth/token.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
@@ -16,9 +14,7 @@ export class AuthService {
     @Inject(USER_REPOSITORY_TOKEN)
     private userRepository: UserRepositoryInterface,
     private passwordService: PasswordService,
-    private tokenService: TokenService,
-    @Inject(REFRESH_TOKEN_REPOSITORY_TOKEN)
-    private refreshTokenRepository: RefreshTokenRepositoryInterface,
+    private sessionService: SessionService,
     @Inject(AUDIT_LOG_REPOSITORY_TOKEN)
     private auditLogRepository: AuditLogRepositoryInterface,
   ) {}
@@ -32,11 +28,7 @@ export class AuthService {
       name: dto.name,
     });
 
-    const sessionId = crypto.randomUUID();
-    const tokens = await this.generateTokens(user.id, user.email, sessionId);
-
-    // Save refresh token session
-    await this.saveRefreshToken(user.id, tokens.refreshToken, sessionId, null, null);
+    const session = await this.sessionService.createSession(user.id, user.email, null, null);
 
     return {
       user: {
@@ -45,7 +37,10 @@ export class AuthService {
         name: user.name,
         createdAt: user.createdAt,
       },
-      tokens,
+      tokens: {
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+      },
     };
   }
 
@@ -104,19 +99,13 @@ export class AuthService {
     // Rate Limiting placeholder
     // TODO: ThrottlerGuard, 5 attempts, 15 minutes lock. Future Sprint.
 
-    // 1. Generate unique session ID
-    const sessionId = crypto.randomUUID();
+    // 1. Establish session and generate tokens
+    const session = await this.sessionService.createSession(user.id, user.email, ipAddress, userAgent);
 
-    // 2. Generate access & refresh tokens mapping the session ID
-    const tokens = await this.generateTokens(user.id, user.email, sessionId);
-
-    // 3. Save refresh token session with metadata
-    await this.saveRefreshToken(user.id, tokens.refreshToken, sessionId, ipAddress, userAgent);
-
-    // 4. Update lastLoginAt
+    // 2. Update lastLoginAt
     await this.userRepository.updateLastLogin(user.id);
 
-    // 5. Create SUCCESS audit log
+    // 3. Create SUCCESS audit log
     await this.auditLogRepository.create({
       userId: user.id,
       action: 'USER_LOGIN_SUCCESS',
@@ -124,7 +113,7 @@ export class AuthService {
       entityId: user.id,
       ipAddress,
       userAgent,
-      details: { sessionId },
+      details: { sessionId: session.sessionId },
     });
 
     return {
@@ -133,42 +122,10 @@ export class AuthService {
         email: user.email,
         name: user.name,
       },
-      tokens,
+      tokens: {
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+      },
     };
-  }
-
-  async generateTokens(userId: string, email: string, sessionId: string) {
-    const payload = { sub: userId, email, sessionId };
-    
-    const [accessToken, refreshToken] = await Promise.all([
-      this.tokenService.generateAccess(payload),
-      this.tokenService.generateRefresh(payload),
-    ]);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
-  async saveRefreshToken(
-    userId: string,
-    token: string,
-    sessionId: string,
-    ipAddress: string | null,
-    userAgent: string | null,
-  ) {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days matching JWT expiration
-
-    await this.refreshTokenRepository.create({
-      id: sessionId,
-      userId,
-      tokenHash,
-      userAgent,
-      ipAddress,
-      expiresAt,
-    });
   }
 }
