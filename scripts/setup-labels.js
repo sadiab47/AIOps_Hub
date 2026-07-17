@@ -1,15 +1,14 @@
 const LABELS = [
-  { name: 'type/bug', color: 'd73a4a', description: 'Something isn\'t working' },
-  { name: 'type/feature', color: 'a2eeef', description: 'New feature or request' },
-  { name: 'type/docs', color: '0075ca', description: 'Improvements or additions to documentation' },
-  { name: 'type/refactor', color: '7057ff', description: 'A code change that neither fixes a bug nor adds a feature' },
-  { name: 'priority/critical', color: 'b60205', description: 'Blocks progress or breaks production' },
-  { name: 'priority/high', color: 'd93f0b', description: 'High priority issue' },
-  { name: 'priority/medium', color: 'fbca04', description: 'Medium priority issue' },
-  { name: 'priority/low', color: '0e8a16', description: 'Low priority issue' },
-  { name: 'status/in-progress', color: 'fef2c0', description: 'Work is currently in progress' },
-  { name: 'status/review-needed', color: 'c2e0c6', description: 'Ready for code review or testing' },
-  { name: 'status/on-hold', color: 'ffffff', description: 'Waiting on external dependencies or feedback' },
+  { name: 'feature', color: 'a2eeef', description: 'New feature or request' },
+  { name: 'bug', color: 'd73a4a', description: 'Something isn\'t working' },
+  { name: 'backend', color: '0052cc', description: 'Server-side / API issues or features' },
+  { name: 'frontend', color: '1d76db', description: 'Client-side / web application UI' },
+  { name: 'database', color: 'bfd4f2', description: 'Database schema, queries, or migrations' },
+  { name: 'infra', color: '5319e7', description: 'Infrastructure, docker, docker-compose, or devops' },
+  { name: 'security', color: 'e11d21', description: 'Vulnerabilities or security enhancements' },
+  { name: 'documentation', color: '0075ca', description: 'Improvements or additions to documentation' },
+  { name: 'architecture', color: '7057ff', description: 'System design and structural proposals' },
+  { name: 'technical debt', color: 'fef2c0', description: 'Code cleanup, refactoring, or performance optimization' },
 ];
 
 async function run() {
