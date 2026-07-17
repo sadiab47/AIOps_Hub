@@ -1,10 +1,14 @@
-import { Controller, Post, Body, Res, Ip, Headers, Req, UnauthorizedException, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Res, Ip, Headers, Req, UnauthorizedException, HttpCode, Get, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiCookieAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
+import { UsersService } from '../../users/services/users.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { CookieService } from '../../../common/auth/cookie.service';
+import { JwtAccessGuard } from '../../../common/auth/jwt-access.guard';
+import { CurrentUser } from '../../../common/auth/current-user.decorator';
+import { CurrentUserResponseDto } from '../../users/dto/current-user-response.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -12,6 +16,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private cookieService: CookieService,
+    private usersService: UsersService,
   ) {}
 
   @Post('register')
@@ -170,6 +175,24 @@ export class AuthController {
     return {
       success: true,
       message: 'All sessions logged out successfully.',
+    };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAccessGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Get current authenticated user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully.',
+    type: CurrentUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Missing, invalid, or expired access token.' })
+  async me(@CurrentUser('sub') userId: string) {
+    const profile = await this.usersService.getCurrentProfile(userId);
+    return {
+      success: true,
+      data: profile,
     };
   }
 }

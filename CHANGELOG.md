@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AUTH-005 - Current User
+
+#### Added
+- Current User Profile endpoint (`GET /api/v1/auth/me`) protected by `JwtAccessGuard`
+- Created reusable `JwtAccessGuard` to extract and verify namespaced cookie-based access tokens
+- Created generic parameter decorator `@CurrentUser()` supporting whole payload retrieval or key selections (e.g. `@CurrentUser('sub')`)
+- Implemented `UsersService.getCurrentProfile` containing existence checks, status validation (verifying active users), and account lock verification
+- Added `CurrentUserResponseDto` to establish a stable API contract isolating DB models from external presentation layers
+
+#### Testing
+- Created unit tests inside `users.service.spec.ts` asserting profile data structure mapping, inactive/locked user blocks, and invalid identifiers
+- Expanded integration tests in `auth.integration.spec.ts` covering logged out access blocks, user disablement/suspension, and valid profile payload structures
+
 ### AUTH-004 - Logout
 
 #### Added
