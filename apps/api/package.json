@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "nest start --watch",
-    "start": "nest start"
+    "start": "nest start",
+    "test": "jest"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -21,13 +22,42 @@
     "pino": "^9.6.0",
     "nestjs-pino": "^4.2.0",
     "pino-pretty": "^13.0.0",
-    "@nestjs/terminus": "^11.0.0"
+    "@nestjs/terminus": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/passport": "^11.0.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@types/node": "^22.0.0",
     "typescript": "^5.0.0",
-    "@aiops-hub/tsconfig": "workspace:*"
+    "@aiops-hub/tsconfig": "workspace:*",
+    "@types/bcrypt": "^5.0.2",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/express": "^5.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "ts-jest": "^29.2.5"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }
