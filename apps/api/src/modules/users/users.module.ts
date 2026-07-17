@@ -11,6 +11,6 @@ import { USER_REPOSITORY_TOKEN } from './repositories/user-repository.interface'
       useClass: UserRepository,
     },
   ],
-  exports: [UsersService],
+  exports: [UsersService, USER_REPOSITORY_TOKEN],
 })
 export class UsersModule {}

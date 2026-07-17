@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AUTH-003 - Refresh Token
+
+#### Added
+- Refresh token rotation endpoint (`POST /api/v1/auth/refresh`)
+- Integrated `cookie-parser` middleware inside NestJS app bootstrap
+- Added `findById` and `updateTokenHash` query methods to `RefreshTokenRepository`
+- Added `rotateSession` and `findActiveSession` to `SessionService`
+- Exported `USER_REPOSITORY_TOKEN` from `UsersModule` to resolve cross-module dependency injections
+
+#### Testing
+- Added comprehensive unit tests in `auth.service.spec.ts` for token verification, expiration validation, revocation checking, user account status, and reuse detection
+- Implemented supertest integration tests inside `auth.integration.spec.ts` testing the complete register -> login -> refresh -> reuse block lifecycles
+
+#### Security
+- Implemented automated Refresh Token Reuse Detection which immediately invalidates all active sessions for a user upon detecting a replay/reuse attempt
+- Added security audit logs: `TOKEN_REFRESH_SUCCESS`, `TOKEN_REFRESH_FAILED`, and `TOKEN_REUSE_DETECTED`
+- Enforced atomic cookie replacement (overwriting both access and refresh cookies) on rotation
+
 ### AUTH-002 - User Login
 
 #### Added

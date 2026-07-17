@@ -49,6 +49,15 @@ export class SessionService {
     return this.refreshTokenRepository.revoke(sessionId);
   }
 
+  async rotateSession(sessionId: string, newRefreshToken: string): Promise<void> {
+    const tokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+    await this.refreshTokenRepository.updateTokenHash(sessionId, tokenHash);
+  }
+
+  async findActiveSession(sessionId: string) {
+    return this.refreshTokenRepository.findById(sessionId);
+  }
+
   async revokeAllSessions(userId: string) {
     return this.refreshTokenRepository.revokeAllByUser(userId);
   }

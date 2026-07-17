@@ -49,4 +49,17 @@ export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
       },
     });
   }
+
+  async findById(id: string): Promise<RefreshToken | null> {
+    return this.prisma.refreshToken.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateTokenHash(id: string, tokenHash: string): Promise<RefreshToken> {
+    return this.prisma.refreshToken.update({
+      where: { id },
+      data: { tokenHash },
+    });
+  }
 }

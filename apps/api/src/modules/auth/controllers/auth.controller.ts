@@ -1,5 +1,5 @@
-import { Controller, Post, Body, Res, Ip, Headers } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Post, Body, Res, Ip, Headers, Req, UnauthorizedException, HttpCode } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
@@ -43,6 +43,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Authenticate user and start session' })
   @ApiHeader({
     name: 'user-agent',
@@ -74,6 +75,41 @@ export class AuthController {
     return {
       success: true,
       data: result.user,
+    };
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Rotate active session refresh and access tokens' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens rotated successfully and new secure cookies attached.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Overwrites namespaced aiops_access_token and aiops_refresh_token session cookies.',
+        schema: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Invalid, expired, or revoked refresh token.' })
+  async refresh(
+    @Req() req: Request,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.aiops_refresh_token;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid session');
+    }
+
+    const result = await this.authService.refreshSession(refreshToken, ip || null, userAgent || null);
+
+    this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
+
+    return {
+      success: true,
     };
   }
 }

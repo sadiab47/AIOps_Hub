@@ -8,4 +8,6 @@ export interface RefreshTokenRepositoryInterface {
   revoke(id: string): Promise<RefreshToken>;
   revokeAllByUser(userId: string): Promise<Prisma.BatchPayload>;
   deleteExpired(): Promise<Prisma.BatchPayload>;
+  findById(id: string): Promise<RefreshToken | null>;
+  updateTokenHash(id: string, tokenHash: string): Promise<RefreshToken>;
 }
