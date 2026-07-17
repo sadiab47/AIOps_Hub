@@ -7,100 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### AUTH-005 - Current User
-
-#### Added
-- Current User Profile endpoint (`GET /api/v1/auth/me`) protected by `JwtAccessGuard`
-- Created reusable `JwtAccessGuard` to extract and verify namespaced cookie-based access tokens
-- Created generic parameter decorator `@CurrentUser()` supporting whole payload retrieval or key selections (e.g. `@CurrentUser('sub')`)
-- Implemented `UsersService.getCurrentProfile` containing existence checks, status validation (verifying active users), and account lock verification
-- Added `CurrentUserResponseDto` to establish a stable API contract isolating DB models from external presentation layers
-
-#### Testing
-- Created unit tests inside `users.service.spec.ts` asserting profile data structure mapping, inactive/locked user blocks, and invalid identifiers
-- Expanded integration tests in `auth.integration.spec.ts` covering logged out access blocks, user disablement/suspension, and valid profile payload structures
-
-### AUTH-004 - Logout
-
-#### Added
-- Logout endpoint (`POST /api/v1/auth/logout`) to invalidate the current session
-- Logout-all endpoint (`POST /api/v1/auth/logout-all`) to invalidate all active multi-device sessions
-- Added `revokedReason` metadata tracking to `RefreshToken` sessions in `schema.prisma`
-- Refactored `CookieService` cookie clearing actions to match set options exactly to ensure browser clearing compatibility
-
-#### Testing
-- Expanded unit tests in `auth.service.spec.ts` asserting single logout, logout all, suspended users, double logouts, and invalid/expired tokens
-- Added integration tests in `auth.integration.spec.ts` validating cookie clearing, session invalidations, and multi-device session isolation
-
-#### Security
-- Implemented fully idempotent logout actions which safely clear client cookies and return success even if session is already invalid (preventing session status leakage)
-- Tracked explicit revocation reasons: `USER_LOGOUT`, `LOGOUT_ALL`, and `TOKEN_REUSE`
-- Renamed success audit event patterns to simplified states (`USER_LOGIN`, `TOKEN_REFRESH`, `USER_LOGOUT`, `USER_LOGOUT_ALL`)
-
-### AUTH-003 - Refresh Token
-
-#### Added
-- Refresh token rotation endpoint (`POST /api/v1/auth/refresh`)
-- Integrated `cookie-parser` middleware inside NestJS app bootstrap
-- Added `findById` and `updateTokenHash` query methods to `RefreshTokenRepository`
-- Added `rotateSession` and `findActiveSession` to `SessionService`
-- Exported `USER_REPOSITORY_TOKEN` from `UsersModule` to resolve cross-module dependency injections
-
-#### Testing
-- Added comprehensive unit tests in `auth.service.spec.ts` for token verification, expiration validation, revocation checking, user account status, and reuse detection
-- Implemented supertest integration tests inside `auth.integration.spec.ts` testing the complete register -> login -> refresh -> reuse block lifecycles
-
-#### Security
-- Implemented automated Refresh Token Reuse Detection which immediately invalidates all active sessions for a user upon detecting a replay/reuse attempt
-- Added security audit logs: `TOKEN_REFRESH_SUCCESS`, `TOKEN_REFRESH_FAILED`, and `TOKEN_REUSE_DETECTED`
-- Enforced atomic cookie replacement (overwriting both access and refresh cookies) on rotation
-
-### AUTH-002 - User Login
-
-#### Added
-- User login endpoint (`POST /api/v1/auth/login`)
-- Common authentication helpers (`PasswordService`, `TokenService`, `CookieService`)
-- Namespaced session cookies (`aiops_access_token`, `aiops_refresh_token`)
-- Device metadata support (`userAgent`, `ipAddress`) inside `RefreshToken` sessions
-- User account status fields (`isActive`, `lockedAt`, `lastLoginAt`)
-- Structured security auditing logs (`USER_LOGIN_SUCCESS`, `USER_LOGIN_FAILED`)
-- OpenAPI documentation decorated on Auth endpoints at `/api/docs`
-
-#### Testing
-- Expanded Jest unit test suites for registration and login authentication flows
-- Monorepo production build verification
-
-#### Security
-- Validation for email casing/whitespace normalization and password presence
-- Generic 401 response on any failed lookup, suspension, or credential mismatch (prevents user enumeration)
-- Decoupled ORM dependencies from services using abstract repository interfaces
-
-### AUTH-001 - User Registration
-
-#### Added
-- User registration endpoint
-- Password hashing with bcrypt
-- JWT access and refresh tokens
-- Refresh token hashing (SHA-256)
-- HTTP-only cookie support
-- User and RefreshToken repositories
-
-#### Testing
-- Unit tests for registration flow
-- Monorepo build verification
-
-#### Security
-- Passwords stored as bcrypt hashes
-- Refresh tokens stored as hashes
-- HTTP-only cookies enabled
+---
 
 ## [0.1.0] - 2026-07-17
 
 ### Added
-- Monorepo structure using `pnpm` workspaces and `turbo` pipelines.
-- Shared typescript (`@aiops-hub/tsconfig`) and eslint (`@aiops-hub/eslint-config`) configurations.
-- Docker Compose local environment defining PostgreSQL 16 and Redis 7.
-- Database package (`@aiops-hub/db`) with Prisma schema. Models defined: `User`, `Organization`, `Member`, `AuditLog` featuring UUID ids, audit dates, and soft deletes.
-- NestJS API skeleton (`apps/api`) featuring Zod environment validation, Pino logging, global validation pipes, and terminus health check endpoints.
-- Next.js 15 Web Application (`apps/web`) landing page configured with Tailwind CSS.
-- GitHub Actions CI workflow for linting, typechecking, and verifying workspace builds.
+- **Monorepo Architecture**: Setup workspaces using `pnpm` and Turborepo configurations.
+- **NestJS & Next.js Skeletons**: API and web application scaffolds with TypeScript and shared ESLint configs.
+- **Dockerized Environment**: Orchestration for PostgreSQL and Redis services.
+- **Prisma DB Integration**: Configured models for `User`, `Organization`, `Member`, `AuditLog`, and `RefreshToken` with relational keys.
+- **User Registration**: Sign up with automatic cookie distribution (`POST /api/v1/auth/register`).
+- **User Login**: Secure authentication (`POST /api/v1/auth/login`) recording login time and binding metadata.
+- **Refresh Token Rotation**: Endpoint (`POST /api/v1/auth/refresh`) providing single-use token exchanges.
+- **Idempotent Logout**: Current session termination (`POST /api/v1/auth/logout`) and multi-device termination (`POST /api/v1/auth/logout-all`).
+- **Current User Endpoint**: Route (`GET /api/v1/auth/me`) protected by custom JWT cookie guards.
+- **Authentication Core Services**: Created `AuthService`, `SessionService`, `PasswordService` (bcrypt), `TokenService` (JWT), and `CookieService` (HTTP-only).
+- **JwtAccessGuard & CurrentUser Decorator**: Custom guard for access token validation and decorator for user payload extraction.
+- **API Swagger Documentation**: Fully documented endpoints with request models, response types, and cookie specifications.
+
+### Security
+- **Bcrypt Hashing**: Secure password hashing to prevent plain-text exposure.
+- **Token Rotation**: Dynamic rotation of refresh tokens to limit token lifespan.
+- **Token Reuse Detection**: Instant revocation of all user sessions upon detecting rotated token replay/reuse.
+- **SHA-256 Hashing**: Refresh tokens stored as SHA-256 hashes in the database.
+- **HTTP-only Cookies**: Guard against Cross-Site Scripting (XSS) by isolating auth tokens.
+- **Idempotent Cleans**: Session logouts safely clean client cookies without leaking login states.
+- **Multi-Device Isolation**: Individual session tracking allowing targeted single logouts or cascading global logouts.
+- **Security Auditing**: Structured audit logs for logins, failed access attempts, refreshes, token reuses, and logouts.
+- **Enumeration Prevention**: Generic error responses to prevent account enumeration attacks.
+
+### Testing
+- **30 Passing Tests**: High coverage across modules.
+- **Unit Testing**: Isolated verification for `AuthService` and `UsersService`.
+- **Integration Testing**: Supertest integration suite verifying registration, login, token rotations, reuses, and multi-device logouts.
+- **Build Verification**: Turborepo build pipeline configured for pre-commit and CI/CD validation.
+
+### Documentation
+- **Roadmap Outline**: Detailed sprint roadmap (`docs/01-roadmap.md`).
+- **Architecture ADRs**: Documented patterns for Monolith architecture, Multi-Tenancy database designs, and monorepo configurations.
+- **Authentication Architecture**: Exhaustive guide detailing flows, lifecycles, and security behaviors (`docs/auth-architecture.md`).

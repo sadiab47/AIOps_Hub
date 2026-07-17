@@ -8,12 +8,30 @@ Designed for production from day one.
 
 ---
 
+[![Version](https://img.shields.io/badge/Version-v0.1.0-blue.svg)](#)
+[![Status](https://img.shields.io/badge/Status-Authentication%20Complete-green.svg)](#)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+---
+
+### 📊 Project Metrics & Architecture
+| Metric | Value | Details |
+| :--- | :--- | :--- |
+| **Architecture** | Monorepo / Modular Monolith | Next.js 15, NestJS 11, Turborepo |
+| **Database** | PostgreSQL & Redis | Prisma ORM |
+| **Tests** | 30 Tests | 100% Passing |
+| **Security** | JWT Access & Stateful Refresh | Cookie-based, rotation on refresh |
+| **CI/CD** | Enabled | GitHub Actions validation |
+
+### 🔐 Authentication Module Release Summary
+- **Features**: 5 Core Features (Registration, Login, Refresh Rotation, Idempotent Logout, Current User Profile)
+- **Status**: 100% Complete & Verified (30 passing tests)
+- **Standards**: SHA-256 Refresh Hashing, XSS isolation (HTTP-only cookies), multi-device tracking, automated reuse detection.
 
 ---
 
