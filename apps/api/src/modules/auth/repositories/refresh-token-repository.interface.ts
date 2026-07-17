@@ -5,8 +5,8 @@ export const REFRESH_TOKEN_REPOSITORY_TOKEN = 'RefreshTokenRepositoryInterface';
 export interface RefreshTokenRepositoryInterface {
   create(data: Prisma.RefreshTokenUncheckedCreateInput): Promise<RefreshToken>;
   findByTokenHash(tokenHash: string): Promise<RefreshToken | null>;
-  revoke(id: string): Promise<RefreshToken>;
-  revokeAllByUser(userId: string): Promise<Prisma.BatchPayload>;
+  revoke(id: string, reason: string): Promise<RefreshToken>;
+  revokeAllByUser(userId: string, reason: string): Promise<Prisma.BatchPayload>;
   deleteExpired(): Promise<Prisma.BatchPayload>;
   findById(id: string): Promise<RefreshToken | null>;
   updateTokenHash(id: string, tokenHash: string): Promise<RefreshToken>;

@@ -112,4 +112,64 @@ export class AuthController {
       success: true,
     };
   }
+
+  @Post('logout')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Log out from current session and clear auth cookies' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current session invalidated and auth cookies cleared (idempotent).',
+    headers: {
+      'Set-Cookie': {
+        description: 'Clears namespaced aiops_access_token and aiops_refresh_token cookies.',
+        schema: { type: 'string' },
+      },
+    },
+  })
+  async logout(
+    @Req() req: Request,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.aiops_refresh_token;
+
+    await this.authService.logout(refreshToken, ip || null, userAgent || null);
+    this.cookieService.clearAuthCookies(res);
+
+    return {
+      success: true,
+      message: 'Logged out successfully.',
+    };
+  }
+
+  @Post('logout-all')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Log out from all active multi-device sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'All active user sessions invalidated and auth cookies cleared (idempotent).',
+    headers: {
+      'Set-Cookie': {
+        description: 'Clears namespaced aiops_access_token and aiops_refresh_token cookies.',
+        schema: { type: 'string' },
+      },
+    },
+  })
+  async logoutAll(
+    @Req() req: Request,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.aiops_refresh_token;
+
+    await this.authService.logoutAll(refreshToken, ip || null, userAgent || null);
+    this.cookieService.clearAuthCookies(res);
+
+    return {
+      success: true,
+      message: 'All sessions logged out successfully.',
+    };
+  }
 }

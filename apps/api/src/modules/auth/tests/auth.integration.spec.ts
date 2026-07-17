@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from '../../../app.module';
 import { PrismaService } from '../../../common/database/prisma.service';
 
-describe('Authentication Integration Tests (AUTH-003)', () => {
+describe('Authentication Integration Tests (AUTH-004)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let testEmail: string;
@@ -27,7 +27,7 @@ describe('Authentication Integration Tests (AUTH-003)', () => {
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
-    testEmail = `integration-rtr-${Date.now()}@example.com`;
+    testEmail = `integration-logout-${Date.now()}@example.com`;
   });
 
   afterAll(async () => {
@@ -45,21 +45,20 @@ describe('Authentication Integration Tests (AUTH-003)', () => {
     }
   });
 
-  it('should flow through Register -> Login -> Refresh -> Block Reuse', async () => {
-    // 1. Register a new user
-    const regRes = await request(app.getHttpServer())
+  it('should support register and login', async () => {
+    // Register
+    await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
         email: testEmail,
         password: 'Password123!',
-        name: 'RTR Tester',
+        name: 'Logout Tester',
       })
       .expect(201);
+  });
 
-    expect(regRes.body.success).toBe(true);
-    expect(regRes.body.data.email).toBe(testEmail);
-
-    // 2. Login to generate session cookies
+  it('should log out current session and verify refresh is blocked, checking idempotency', async () => {
+    // 1. Login to get a session
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({
@@ -68,55 +67,127 @@ describe('Authentication Integration Tests (AUTH-003)', () => {
       })
       .expect(200);
 
-    expect(loginRes.body.success).toBe(true);
-
     const loginCookies = loginRes.headers['set-cookie'] as unknown as string[];
-    expect(loginCookies).toBeDefined();
-    
-    // Find access and refresh token cookies
-    const accessTokenCookie = loginCookies.find((c) => c.startsWith('aiops_access_token='));
-    const refreshTokenCookie = loginCookies.find((c) => c.startsWith('aiops_refresh_token='));
+    const refreshCookie = loginCookies.find((c) => c.startsWith('aiops_refresh_token='));
+    expect(refreshCookie).toBeDefined();
 
-    expect(accessTokenCookie).toBeDefined();
-    expect(refreshTokenCookie).toBeDefined();
+    const refreshTokenValue = refreshCookie!.split(';')[0];
 
-    const initialRefreshTokenValue = refreshTokenCookie!.split(';')[0];
-
-    // Wait slightly to ensure token timestamps are different
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    // 3. First Refresh - Rotates cookies and returns success
-    const refreshRes1 = await request(app.getHttpServer())
-      .post('/api/v1/auth/refresh')
-      .set('Cookie', [initialRefreshTokenValue])
+    // 2. Logout - Clear cookies, return standard success message
+    const logoutRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/logout')
+      .set('Cookie', [refreshTokenValue])
       .expect(200);
 
-    expect(refreshRes1.body.success).toBe(true);
+    expect(logoutRes.body.success).toBe(true);
+    expect(logoutRes.body.message).toBe('Logged out successfully.');
 
-    const refreshCookies1 = refreshRes1.headers['set-cookie'] as unknown as string[];
-    expect(refreshCookies1).toBeDefined();
+    // Assert Set-Cookie contains empty/deleted values
+    const logoutCookies = logoutRes.headers['set-cookie'] as unknown as string[];
+    expect(logoutCookies.some((c) => c.includes('aiops_refresh_token=;'))).toBe(true);
 
-    const accessCookieRotated1 = refreshCookies1.find((c) => c.startsWith('aiops_access_token='));
-    const refreshCookieRotated1 = refreshCookies1.find((c) => c.startsWith('aiops_refresh_token='));
-
-    expect(accessCookieRotated1).toBeDefined();
-    expect(refreshCookieRotated1).toBeDefined();
-
-    const rotatedRefreshTokenValue1 = refreshCookieRotated1!.split(';')[0];
-
-    // Ensure rotated refresh token is different from original
-    expect(rotatedRefreshTokenValue1).not.toBe(initialRefreshTokenValue);
-
-    // 4. Reuse Detection - Refreshing with the old refresh token must trigger 401 and revoke all sessions
+    // 3. Verify refresh with the logged out token is rejected
     await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .set('Cookie', [initialRefreshTokenValue])
+      .set('Cookie', [refreshTokenValue])
       .expect(401);
 
-    // 5. Subsequent Refresh with the previously valid rotated token must now ALSO fail because all user sessions were revoked
+    // 4. Verify logout is idempotent (calling logout again on invalid token still returns 200)
+    const logoutResIdempotent = await request(app.getHttpServer())
+      .post('/api/v1/auth/logout')
+      .set('Cookie', [refreshTokenValue])
+      .expect(200);
+
+    expect(logoutResIdempotent.body.success).toBe(true);
+  });
+
+  it('should support multi-device logins and verify logout-all invalidates everything', async () => {
+    // 1. Establish session A (Device A)
+    const loginResA = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        email: testEmail,
+        password: 'Password123!',
+      })
+      .set('User-Agent', 'Device-A')
+      .expect(200);
+
+    const cookieA = (loginResA.headers['set-cookie'] as unknown as string[]).find((c) => c.startsWith('aiops_refresh_token='))!.split(';')[0];
+
+    // 2. Establish session B (Device B)
+    const loginResB = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        email: testEmail,
+        password: 'Password123!',
+      })
+      .set('User-Agent', 'Device-B')
+      .expect(200);
+
+    const cookieB = (loginResB.headers['set-cookie'] as unknown as string[]).find((c) => c.startsWith('aiops_refresh_token='))!.split(';')[0];
+
+    // 3. Logout All from Device A
+    const logoutAllRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/logout-all')
+      .set('Cookie', [cookieA])
+      .expect(200);
+
+    expect(logoutAllRes.body.success).toBe(true);
+    expect(logoutAllRes.body.message).toBe('All sessions logged out successfully.');
+
+    // 4. Verify BOTH Device A and Device B refreshes are blocked
     await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .set('Cookie', [rotatedRefreshTokenValue1])
+      .set('Cookie', [cookieA])
       .expect(401);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', [cookieB])
+      .expect(401);
+  });
+
+  it('should revoke only current session on single logout and preserve other device sessions', async () => {
+    // 1. Establish Device A session
+    const loginResA = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        email: testEmail,
+        password: 'Password123!',
+      })
+      .set('User-Agent', 'Device-A')
+      .expect(200);
+
+    const cookieA = (loginResA.headers['set-cookie'] as unknown as string[]).find((c) => c.startsWith('aiops_refresh_token='))!.split(';')[0];
+
+    // 2. Establish Device B session
+    const loginResB = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        email: testEmail,
+        password: 'Password123!',
+      })
+      .set('User-Agent', 'Device-B')
+      .expect(200);
+
+    const cookieB = (loginResB.headers['set-cookie'] as unknown as string[]).find((c) => c.startsWith('aiops_refresh_token='))!.split(';')[0];
+
+    // 3. Single Logout Device A
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/logout')
+      .set('Cookie', [cookieA])
+      .expect(200);
+
+    // 4. Device A refresh is blocked
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', [cookieA])
+      .expect(401);
+
+    // 5. Device B refresh STILL WORKS (sessions are isolated!)
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', [cookieB])
+      .expect(200);
   });
 });

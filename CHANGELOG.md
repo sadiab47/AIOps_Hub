@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AUTH-004 - Logout
+
+#### Added
+- Logout endpoint (`POST /api/v1/auth/logout`) to invalidate the current session
+- Logout-all endpoint (`POST /api/v1/auth/logout-all`) to invalidate all active multi-device sessions
+- Added `revokedReason` metadata tracking to `RefreshToken` sessions in `schema.prisma`
+- Refactored `CookieService` cookie clearing actions to match set options exactly to ensure browser clearing compatibility
+
+#### Testing
+- Expanded unit tests in `auth.service.spec.ts` asserting single logout, logout all, suspended users, double logouts, and invalid/expired tokens
+- Added integration tests in `auth.integration.spec.ts` validating cookie clearing, session invalidations, and multi-device session isolation
+
+#### Security
+- Implemented fully idempotent logout actions which safely clear client cookies and return success even if session is already invalid (preventing session status leakage)
+- Tracked explicit revocation reasons: `USER_LOGOUT`, `LOGOUT_ALL`, and `TOKEN_REUSE`
+- Renamed success audit event patterns to simplified states (`USER_LOGIN`, `TOKEN_REFRESH`, `USER_LOGOUT`, `USER_LOGOUT_ALL`)
+
 ### AUTH-003 - Refresh Token
 
 #### Added

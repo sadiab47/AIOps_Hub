@@ -20,14 +20,17 @@ export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
     });
   }
 
-  async revoke(id: string): Promise<RefreshToken> {
+  async revoke(id: string, reason: string): Promise<RefreshToken> {
     return this.prisma.refreshToken.update({
       where: { id },
-      data: { revokedAt: new Date() },
+      data: {
+        revokedAt: new Date(),
+        revokedReason: reason,
+      },
     });
   }
 
-  async revokeAllByUser(userId: string): Promise<Prisma.BatchPayload> {
+  async revokeAllByUser(userId: string, reason: string): Promise<Prisma.BatchPayload> {
     return this.prisma.refreshToken.updateMany({
       where: {
         userId,
@@ -35,6 +38,7 @@ export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
       },
       data: {
         revokedAt: new Date(),
+        revokedReason: reason,
       },
     });
   }

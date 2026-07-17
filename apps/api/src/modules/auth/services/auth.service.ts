@@ -111,7 +111,7 @@ export class AuthService {
     // 3. Create SUCCESS audit log
     await this.auditLogRepository.create({
       userId: user.id,
-      action: 'USER_LOGIN_SUCCESS',
+      action: 'USER_LOGIN',
       entityName: 'User',
       entityId: user.id,
       ipAddress,
@@ -202,7 +202,7 @@ export class AuthService {
     const incomingHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     if (incomingHash !== session.tokenHash) {
       // Immediate revocation of all sessions for security breach
-      await this.sessionService.revokeAllSessions(session.userId);
+      await this.sessionService.revokeAllSessions(session.userId, 'TOKEN_REUSE');
       
       await this.auditLogRepository.create({
         userId: session.userId,
@@ -227,7 +227,7 @@ export class AuthService {
 
     await this.auditLogRepository.create({
       userId: user.id,
-      action: 'TOKEN_REFRESH_SUCCESS',
+      action: 'TOKEN_REFRESH',
       entityName: 'Session',
       entityId: session.id,
       ipAddress,
@@ -239,5 +239,64 @@ export class AuthService {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
+  }
+
+  async logout(refreshToken: string | undefined, ipAddress: string | null, userAgent: string | null): Promise<void> {
+    if (!refreshToken) {
+      return;
+    }
+
+    let payload;
+    try {
+      payload = await this.tokenService.verify(refreshToken);
+    } catch (e) {
+      return;
+    }
+
+    const session = await this.sessionService.findActiveSession(payload.sessionId);
+    if (!session || session.revokedAt || session.expiresAt < new Date()) {
+      return;
+    }
+
+    await this.sessionService.revokeSession(session.id, 'USER_LOGOUT');
+
+    await this.auditLogRepository.create({
+      userId: session.userId,
+      action: 'USER_LOGOUT',
+      entityName: 'Session',
+      entityId: session.id,
+      ipAddress,
+      userAgent,
+      details: { sessionId: session.id },
+    });
+  }
+
+  async logoutAll(refreshToken: string | undefined, ipAddress: string | null, userAgent: string | null): Promise<void> {
+    if (!refreshToken) {
+      return;
+    }
+
+    let payload;
+    try {
+      payload = await this.tokenService.verify(refreshToken);
+    } catch (e) {
+      return;
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user || !user.isActive || user.lockedAt) {
+      return;
+    }
+
+    await this.sessionService.revokeAllSessions(user.id, 'LOGOUT_ALL');
+
+    await this.auditLogRepository.create({
+      userId: user.id,
+      action: 'USER_LOGOUT_ALL',
+      entityName: 'User',
+      entityId: user.id,
+      ipAddress,
+      userAgent,
+    });
   }
 }

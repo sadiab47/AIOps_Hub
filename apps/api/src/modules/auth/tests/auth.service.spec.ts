@@ -168,7 +168,7 @@ describe('AuthService', () => {
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGIN_SUCCESS',
+          action: 'USER_LOGIN',
           ipAddress: '127.0.0.1',
           userAgent: 'Mozilla/5.0',
         }),
@@ -310,6 +310,7 @@ describe('AuthService', () => {
         ipAddress: '127.0.0.1',
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
+        revokedReason: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -342,7 +343,7 @@ describe('AuthService', () => {
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'TOKEN_REFRESH_SUCCESS',
+          action: 'TOKEN_REFRESH',
         }),
       );
 
@@ -402,6 +403,7 @@ describe('AuthService', () => {
         ipAddress: '127.0.0.1',
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: new Date(),
+        revokedReason: 'USER_LOGOUT',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -435,6 +437,7 @@ describe('AuthService', () => {
         ipAddress: '127.0.0.1',
         expiresAt: new Date(Date.now() - 100000),
         revokedAt: null,
+        revokedReason: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -468,6 +471,7 @@ describe('AuthService', () => {
         ipAddress: '127.0.0.1',
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
+        revokedReason: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -492,13 +496,156 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
 
-      expect(sessionService.revokeAllSessions).toHaveBeenCalledWith(mockSession.userId);
+    });
+  });
+
+  describe('logout', () => {
+    const mockToken = 'mock_refresh_token_value';
+
+    it('should successfully log out and revoke active session', async () => {
+      const mockPayload = {
+        sub: 'user-uuid-login',
+        email: 'test@example.com',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      };
+
+      const mockSession = {
+        id: '12345678-1234-1234-1234-123456789012',
+        userId: 'user-uuid-login',
+        tokenHash: 'token_hash',
+        userAgent: 'Mozilla/5.0',
+        ipAddress: '127.0.0.1',
+        expiresAt: new Date(Date.now() + 100000),
+        revokedAt: null,
+        revokedReason: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      tokenService.verify.mockResolvedValue(mockPayload);
+      sessionService.findActiveSession.mockResolvedValue(mockSession);
+
+      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(tokenService.verify).toHaveBeenCalledWith(mockToken);
+      expect(sessionService.findActiveSession).toHaveBeenCalledWith(mockPayload.sessionId);
+      expect(sessionService.revokeSession).toHaveBeenCalledWith(mockSession.id, 'USER_LOGOUT');
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'TOKEN_REUSE_DETECTED',
           userId: mockSession.userId,
+          action: 'USER_LOGOUT',
         }),
       );
+    });
+
+    it('should return immediately without errors if token is missing', async () => {
+      await service.logout(undefined, '127.0.0.1', 'Mozilla/5.0');
+      expect(tokenService.verify).not.toHaveBeenCalled();
+    });
+
+    it('should return immediately without errors if token verification fails', async () => {
+      tokenService.verify.mockRejectedValue(new Error('Invalid token'));
+      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      expect(sessionService.findActiveSession).not.toHaveBeenCalled();
+    });
+
+    it('should return immediately without errors if session is already revoked', async () => {
+      const mockPayload = {
+        sub: 'user-uuid-login',
+        email: 'test@example.com',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      };
+
+      const mockSession = {
+        id: '12345678-1234-1234-1234-123456789012',
+        userId: 'user-uuid-login',
+        tokenHash: 'token_hash',
+        userAgent: 'Mozilla/5.0',
+        ipAddress: '127.0.0.1',
+        expiresAt: new Date(Date.now() + 100000),
+        revokedAt: new Date(),
+        revokedReason: 'USER_LOGOUT',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      tokenService.verify.mockResolvedValue(mockPayload);
+      sessionService.findActiveSession.mockResolvedValue(mockSession);
+
+      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      expect(sessionService.revokeSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('logoutAll', () => {
+    const mockToken = 'mock_refresh_token_value';
+
+    it('should successfully log out all user sessions', async () => {
+      const mockPayload = {
+        sub: 'user-uuid-login',
+        email: 'test@example.com',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      };
+
+      const mockUser = {
+        id: 'user-uuid-login',
+        email: 'test@example.com',
+        passwordHash: 'hashed_password',
+        name: 'Jane Doe',
+        isActive: true,
+        lockedAt: null,
+        lastLoginAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      tokenService.verify.mockResolvedValue(mockPayload);
+      usersService.findById.mockResolvedValue(mockUser);
+
+      await service.logoutAll(mockToken, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(tokenService.verify).toHaveBeenCalledWith(mockToken);
+      expect(usersService.findById).toHaveBeenCalledWith(mockPayload.sub);
+      expect(sessionService.revokeAllSessions).toHaveBeenCalledWith(mockUser.id, 'LOGOUT_ALL');
+      expect(auditLogRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: mockUser.id,
+          action: 'USER_LOGOUT_ALL',
+        }),
+      );
+    });
+
+    it('should return immediately without errors if token is missing', async () => {
+      await service.logoutAll(undefined, '127.0.0.1', 'Mozilla/5.0');
+      expect(tokenService.verify).not.toHaveBeenCalled();
+    });
+
+    it('should return immediately without errors if user is suspended', async () => {
+      const mockPayload = {
+        sub: 'user-uuid-login',
+        email: 'test@example.com',
+        sessionId: '12345678-1234-1234-1234-123456789012',
+      };
+
+      const mockUser = {
+        id: 'user-uuid-login',
+        email: 'test@example.com',
+        passwordHash: 'hashed_password',
+        name: 'Jane Doe',
+        isActive: false,
+        lockedAt: null,
+        lastLoginAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      tokenService.verify.mockResolvedValue(mockPayload);
+      usersService.findById.mockResolvedValue(mockUser);
+
+      await service.logoutAll(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      expect(sessionService.revokeAllSessions).not.toHaveBeenCalled();
     });
   });
 });

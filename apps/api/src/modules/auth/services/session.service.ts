@@ -45,8 +45,8 @@ export class SessionService {
     };
   }
 
-  async revokeSession(sessionId: string) {
-    return this.refreshTokenRepository.revoke(sessionId);
+  async revokeSession(sessionId: string, reason: string) {
+    return this.refreshTokenRepository.revoke(sessionId, reason);
   }
 
   async rotateSession(sessionId: string, newRefreshToken: string): Promise<void> {
@@ -58,8 +58,8 @@ export class SessionService {
     return this.refreshTokenRepository.findById(sessionId);
   }
 
-  async revokeAllSessions(userId: string) {
-    return this.refreshTokenRepository.revokeAllByUser(userId);
+  async revokeAllSessions(userId: string, reason: string) {
+    return this.refreshTokenRepository.revokeAllByUser(userId, reason);
   }
 
   async findSession(tokenHash: string) {
