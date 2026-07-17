@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../services/auth.service';
 import { UsersService } from '../../users/services/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { REFRESH_TOKEN_REPOSITORY_TOKEN, RefreshTokenRepositoryInterface } from '../repositories/refresh-token-repository.interface';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
@@ -10,7 +10,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
-  let prisma: jest.Mocked<PrismaService>;
+  let refreshTokenRepository: jest.Mocked<RefreshTokenRepositoryInterface>;
 
   beforeEach(async () => {
     const mockUsersService = {
@@ -19,10 +19,10 @@ describe('AuthService', () => {
     const mockJwtService = {
       signAsync: jest.fn(),
     };
-    const mockPrisma = {
-      refreshToken: {
-        create: jest.fn(),
-      },
+    const mockRefreshTokenRepository = {
+      create: jest.fn(),
+      findByTokenHash: jest.fn(),
+      revoke: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -30,14 +30,14 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
-        { provide: PrismaService, useValue: mockPrisma },
+        { provide: REFRESH_TOKEN_REPOSITORY_TOKEN, useValue: mockRefreshTokenRepository },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
-    prisma = module.get(PrismaService);
+    refreshTokenRepository = module.get(REFRESH_TOKEN_REPOSITORY_TOKEN);
   });
 
   it('should be defined', () => {
@@ -78,12 +78,10 @@ describe('AuthService', () => {
       expect(bcrypt.compare(dto.password, usersService.create.mock.calls[0][0].passwordHash)).resolves.toBe(true);
 
       expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
-      expect(prisma.refreshToken.create).toHaveBeenCalledWith(
+      expect(refreshTokenRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            userId: mockUser.id,
-            tokenHash: crypto.createHash('sha256').update('mock_refresh_token').digest('hex'),
-          }),
+          userId: mockUser.id,
+          tokenHash: crypto.createHash('sha256').update('mock_refresh_token').digest('hex'),
         }),
       );
 

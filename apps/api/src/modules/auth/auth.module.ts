@@ -5,6 +5,8 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
 import { UsersModule } from '../users/users.module';
+import { REFRESH_TOKEN_REPOSITORY_TOKEN } from './repositories/refresh-token-repository.interface';
+import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 
 @Module({
   imports: [
@@ -19,6 +21,12 @@ import { UsersModule } from '../users/users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    {
+      provide: REFRESH_TOKEN_REPOSITORY_TOKEN,
+      useClass: RefreshTokenRepository,
+    },
+  ],
 })
 export class AuthModule {}

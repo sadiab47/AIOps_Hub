@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../../users/services/users.service';
 import { RegisterDto } from '../dto/register.dto';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { REFRESH_TOKEN_REPOSITORY_TOKEN, RefreshTokenRepositoryInterface } from '../repositories/refresh-token-repository.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private prisma: PrismaService,
+    @Inject(REFRESH_TOKEN_REPOSITORY_TOKEN)
+    private refreshTokenRepository: RefreshTokenRepositoryInterface,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -59,12 +60,10 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days matching JWT expiration
 
-    await this.prisma.refreshToken.create({
-      data: {
-        userId,
-        tokenHash,
-        expiresAt,
-      },
+    await this.refreshTokenRepository.create({
+      userId,
+      tokenHash,
+      expiresAt,
     });
   }
 }
