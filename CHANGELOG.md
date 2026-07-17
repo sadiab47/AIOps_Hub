@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AUTH-002 - User Login
+
+#### Added
+- User login endpoint (`POST /api/v1/auth/login`)
+- Common authentication helpers (`PasswordService`, `TokenService`, `CookieService`)
+- Namespaced session cookies (`aiops_access_token`, `aiops_refresh_token`)
+- Device metadata support (`userAgent`, `ipAddress`) inside `RefreshToken` sessions
+- User account status fields (`isActive`, `lockedAt`, `lastLoginAt`)
+- Structured security auditing logs (`USER_LOGIN_SUCCESS`, `USER_LOGIN_FAILED`)
+- OpenAPI documentation decorated on Auth endpoints at `/api/docs`
+
+#### Testing
+- Expanded Jest unit test suites for registration and login authentication flows
+- Monorepo production build verification
+
+#### Security
+- Validation for email casing/whitespace normalization and password presence
+- Generic 401 response on any failed lookup, suspension, or credential mismatch (prevents user enumeration)
+- Decoupled ORM dependencies from services using abstract repository interfaces
+
 ### AUTH-001 - User Registration
 
 #### Added
