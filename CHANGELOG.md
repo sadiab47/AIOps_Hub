@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Membership Validation**: Created `MembershipGuard` to check active user-organization memberships.
 - **Sequential Slug Suffixing**: Implemented auto-generating slugs with sequential suffixing (e.g. `acme`, `acme-2`) on name duplicates.
 - **Request Context Standardization**: Standardized `request.context` container for multi-tenant tracing.
+- **Organization Invitations**: Implemented a secure organization invitation workflow (`POST /api/v1/invitations`, `GET /api/v1/invitations`, `GET /api/v1/invitations/:token`, `POST /api/v1/invitations/:token/accept`, `DELETE /api/v1/invitations/:id`).
+- **Cryptographic Token Hashing**: Added SHA-256 hashing for invitation tokens (`tokenHash`) to protect links if DB leaks.
+- **Invitation Status Tracking**: Added `InvitationStatus` enum (`PENDING`, `ACCEPTED`, `REVOKED`, `EXPIRED`).
+- **Role validation**: Enforced validation blocking invitations with `OWNER` role.
+- **Roles Guard (RBAC)**: Added `@Roles()` decorator and `RolesGuard` for declarative controller authorization.
 
 ---
 

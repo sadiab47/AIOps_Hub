@@ -29,6 +29,7 @@ model User {
   memberships  Member[]
   auditLogs    AuditLog[]
   refreshTokens RefreshToken[]
+  invitations  Invitation[]
 
   @@map("users")
 }
@@ -41,6 +42,7 @@ model Organization {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
   members   Member[]
+  invitations Invitation[]
 
   @@map("organizations")
 }
@@ -90,4 +92,32 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model Invitation {
+  id             String           @id @default(uuid()) @db.Uuid
+  email          String
+  role           OrgRole
+  tokenHash      String           @unique
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  organizationId String           @db.Uuid
+  invitedById    String           @db.Uuid
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User             @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([email, organizationId])
+  @@map("invitations")
 }

@@ -18,6 +18,7 @@ export class JwtAccessGuard implements CanActivate {
       request.context = {
         ...request.context,
         userId: payload.sub,
+        email: payload.email,
         sessionId: payload.sessionId,
       };
       return true;
