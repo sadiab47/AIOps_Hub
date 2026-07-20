@@ -25,9 +25,14 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
         },
       });
 
-      // 3. [PLACEHOLDER] Create Default Settings for the new organization
-      // TODO: Once OrganizationSettings model is added to schema, implement creation here:
-      // await tx.organizationSettings.create({ data: { organizationId: org.id, ...defaultSettings } });
+      // 3. Create Default Settings for the new organization
+      await tx.organizationSettings.create({
+        data: {
+          organizationId: org.id,
+          timezone: 'UTC',
+          locale: 'en',
+        },
+      });
 
       // 4. Create Audit Log
       await tx.auditLog.create({

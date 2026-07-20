@@ -43,8 +43,22 @@ model Organization {
   deletedAt DateTime?
   members   Member[]
   invitations Invitation[]
+  settings  OrganizationSettings?
 
   @@map("organizations")
+}
+
+model OrganizationSettings {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @unique @db.Uuid
+  timezone       String       @default("UTC")
+  locale         String       @default("en")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
 }
 
 model Member {
