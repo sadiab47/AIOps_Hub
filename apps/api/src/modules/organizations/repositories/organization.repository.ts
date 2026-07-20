@@ -61,6 +61,17 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
     return count > 0;
   }
 
+  async existsBySlugExcept(slug: string, orgId: string): Promise<boolean> {
+    const count = await this.prisma.organization.count({
+      where: {
+        slug,
+        id: { not: orgId },
+        deletedAt: null,
+      },
+    });
+    return count > 0;
+  }
+
   async findById(id: string): Promise<Organization | null> {
     return this.prisma.organization.findFirst({
       where: {
@@ -129,5 +140,40 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
       membership,
       settings,
     };
+  }
+
+  async updateProfileAndSettings(
+    orgId: string,
+    orgData: Prisma.OrganizationUpdateInput,
+    settingsData: Prisma.OrganizationSettingsUpdateWithoutOrganizationInput,
+    audits: { userId: string; action: string; entityName: string; entityId: string; details?: any; ipAddress?: string | null; userAgent?: string | null }[],
+  ): Promise<{ organization: Organization; settings: OrganizationSettings }> {
+    return this.prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.update({
+        where: { id: orgId },
+        data: orgData,
+      });
+
+      const settings = await tx.organizationSettings.update({
+        where: { organizationId: orgId },
+        data: settingsData,
+      });
+
+      for (const audit of audits) {
+        await tx.auditLog.create({
+          data: {
+            userId: audit.userId,
+            action: audit.action,
+            entityName: audit.entityName,
+            entityId: audit.entityId,
+            details: audit.details ? (audit.details as any) : undefined,
+            ipAddress: audit.ipAddress,
+            userAgent: audit.userAgent,
+          },
+        });
+      }
+
+      return { organization, settings };
+    });
   }
 }

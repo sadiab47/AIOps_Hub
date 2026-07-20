@@ -202,4 +202,77 @@ describe('Organizations Integration Tests (ORG-001)', () => {
       .send({ email: 'another-invitee@example.com', role: OrgRole.MEMBER })
       .expect(403);
   });
+
+  it('should handle PATCH /settings validation, unique conflict, role access, and audit log creation', async () => {
+    // 1. Create a temporary organization to test settings updates
+    const orgRes = await request(app.getHttpServer())
+      .post('/api/v1/organizations')
+      .set('Cookie', authCookies)
+      .send({ name: 'Acme Settings Org' })
+      .expect(201);
+    const orgId = orgRes.body.data.id;
+
+    // 2. OWNER can update profile and settings successfully
+    const updateRes = await request(app.getHttpServer())
+      .patch('/api/v1/organizations/settings')
+      .set('Cookie', authCookies)
+      .set('x-organization-id', orgId)
+      .send({
+        profile: { name: 'Acme Renamed', slug: `acme-renamed-${Date.now()}` },
+        settings: { timezone: 'EST', locale: 'en-US', brandingColor: '#1E40AF', logoUrl: 'https://logo.png' },
+      })
+      .expect(200);
+
+    expect(updateRes.body.success).toBe(true);
+    expect(updateRes.body.data.organization.name).toBe('Acme Renamed');
+    expect(updateRes.body.data.settings.brandingColor).toBe('#1E40AF');
+
+    // Verify Audit Logs exist in Database
+    const audits = await prisma.auditLog.findMany({ where: { entityId: orgId } });
+    const actions = audits.map((a) => a.action);
+    expect(actions).toContain('ORGANIZATION_UPDATED');
+    expect(actions).toContain('SLUG_CHANGED');
+    expect(actions).toContain('SETTINGS_UPDATED');
+
+    // 3. Reserved slug returns 400 Bad Request
+    await request(app.getHttpServer())
+      .patch('/api/v1/organizations/settings')
+      .set('Cookie', authCookies)
+      .set('x-organization-id', orgId)
+      .send({ profile: { slug: 'admin' } })
+      .expect(400);
+
+    // 4. Duplicate slug returns 409 Conflict
+    // First let's create another org
+    const otherOrg = await request(app.getHttpServer())
+      .post('/api/v1/organizations')
+      .set('Cookie', authCookies)
+      .send({ name: 'Other Unique Org' })
+      .expect(201);
+    const otherSlug = otherOrg.body.data.slug;
+
+    // Try to update Acme Settings Org to have the same slug -> Expect 409 Conflict
+    await request(app.getHttpServer())
+      .patch('/api/v1/organizations/settings')
+      .set('Cookie', authCookies)
+      .set('x-organization-id', orgId)
+      .send({ profile: { slug: otherSlug } })
+      .expect(409);
+
+    // 5. MEMBER receives 403 Forbidden
+    // Create a regular user who is not a member of orgId
+    const regularEmail = `reg-${Date.now()}@example.com`;
+    const regRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ email: regularEmail, password: 'Password123!', name: 'Regular User' })
+      .expect(201);
+    const regCookies = regRes.headers['set-cookie'] as unknown as string[];
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/organizations/settings')
+      .set('Cookie', regCookies)
+      .set('x-organization-id', orgId)
+      .send({ profile: { name: 'Hack Name' } })
+      .expect(403);
+  });
 });

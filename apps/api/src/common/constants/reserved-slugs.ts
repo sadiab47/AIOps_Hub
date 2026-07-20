@@ -1,0 +1,17 @@
+export const RESERVED_SLUGS = [
+  'admin',
+  'api',
+  'auth',
+  'settings',
+  'organizations',
+  'dashboard',
+  'login',
+  'logout',
+  'register',
+  'www',
+  'mail',
+  'support',
+  'help',
+  'root',
+  'system',
+];

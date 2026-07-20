@@ -1,20 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { OrganizationsService } from '../services/organizations.service';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
-import { Organization } from '@aiops-hub/db';
+import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
+import { Organization, OrgRole } from '@aiops-hub/db';
 
 describe('OrganizationsService', () => {
   let service: OrganizationsService;
   let organizationRepository: jest.Mocked<OrganizationRepositoryInterface>;
+  let memberRepository: jest.Mocked<MemberRepositoryInterface>;
 
   beforeEach(async () => {
     const mockOrganizationRepository = {
       createWithMemberAndAudit: jest.fn(),
       existsBySlug: jest.fn(),
+      existsBySlugExcept: jest.fn(),
       findById: jest.fn(),
       findUserOrganizations: jest.fn(),
       findOrganizationContext: jest.fn(),
+      updateProfileAndSettings: jest.fn(),
+    };
+
+    const mockMemberRepository = {
+      findMembership: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -24,11 +32,16 @@ describe('OrganizationsService', () => {
           provide: ORGANIZATION_REPOSITORY_TOKEN,
           useValue: mockOrganizationRepository,
         },
+        {
+          provide: MEMBER_REPOSITORY_TOKEN,
+          useValue: mockMemberRepository,
+        },
       ],
     }).compile();
 
     service = module.get<OrganizationsService>(OrganizationsService);
     organizationRepository = module.get(ORGANIZATION_REPOSITORY_TOKEN);
+    memberRepository = module.get(MEMBER_REPOSITORY_TOKEN);
   });
 
   it('should be defined', () => {
@@ -136,6 +149,74 @@ describe('OrganizationsService', () => {
           locale: 'en',
         },
       });
+    });
+  });
+
+  describe('updateProfileAndSettings', () => {
+    beforeEach(() => {
+      memberRepository.findMembership.mockResolvedValue({ role: OrgRole.OWNER } as any);
+      organizationRepository.findById.mockResolvedValue({ id: 'org-uuid', name: 'Acme', slug: 'acme' } as any);
+    });
+
+    it('should throw ForbiddenException if user lacks administrative access', async () => {
+      memberRepository.findMembership.mockResolvedValue({ role: OrgRole.MEMBER } as any);
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { profile: { name: 'New Name' } }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException if slug is a reserved word', async () => {
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { profile: { slug: 'admin' } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if slug regex fails', async () => {
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { profile: { slug: 'Invalid-Slug' } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw ConflictException if slug is already taken by another org', async () => {
+      organizationRepository.existsBySlugExcept.mockResolvedValue(true);
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { profile: { slug: 'taken-slug' } }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw BadRequestException if brandingColor is not hex', async () => {
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { settings: { brandingColor: 'red' } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if logoUrl is not HTTPS', async () => {
+      await expect(
+        service.updateProfileAndSettings('user-uuid', 'org-uuid', { settings: { logoUrl: 'http://logo.png' } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should invoke transaction with correct audit logs on valid updates', async () => {
+      organizationRepository.existsBySlugExcept.mockResolvedValue(false);
+      organizationRepository.updateProfileAndSettings.mockResolvedValue({ success: true } as any);
+
+      const payload = {
+        profile: { name: 'Acme Corp', slug: 'acme-corp' },
+        settings: { brandingColor: '#1E40AF', logoUrl: 'https://acme.org/logo.png' },
+      };
+
+      await service.updateProfileAndSettings('user-uuid', 'org-uuid', payload, '127.0.0.1', 'UA');
+
+      expect(organizationRepository.updateProfileAndSettings).toHaveBeenCalledWith(
+        'org-uuid',
+        { name: 'Acme Corp', slug: 'acme-corp' },
+        { brandingColor: '#1E40AF', logoUrl: 'https://acme.org/logo.png' },
+        expect.arrayContaining([
+          expect.objectContaining({ action: 'ORGANIZATION_UPDATED' }),
+          expect.objectContaining({ action: 'SLUG_CHANGED' }),
+          expect.objectContaining({ action: 'SETTINGS_UPDATED' }),
+        ]),
+      );
     });
   });
 });
