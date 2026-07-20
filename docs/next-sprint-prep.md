@@ -16,6 +16,12 @@ This document captures architectural notes and details the templates for startin
 3. **Audit Event Scaling**:
    - As new features are added, scale the auditing enum: `ORGANIZATION_CREATE`, `ORGANIZATION_UPDATE`, `MEMBER_INVITED`, `MEMBER_JOINED`.
 
+4. **Service Method Signatures (`OrganizationContext`)**:
+   - Standardize service methods to receive a typed `context: OrganizationContext` (comprising `organizationId`, `userId`, `role`) instead of flattened lists of IDs/roles. This keeps signatures unified and extensible.
+
+5. **Future Database Models**:
+   - Anticipate future schemas to introduce `Invitation`, `OrganizationSettings`, `Workspace`, and `ApiKey` models, logically partitioned by `organizationId`.
+
 ---
 
 ## 📋 ORG-001 Issue Template

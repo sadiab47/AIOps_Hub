@@ -1,0 +1,22 @@
+import { Organization, Prisma } from '@aiops-hub/db';
+
+export const ORGANIZATION_REPOSITORY_TOKEN = 'OrganizationRepositoryInterface';
+
+export interface AuditEvent {
+  action: string;
+  entityName: string;
+  entityId?: string;
+  details?: Record<string, any>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+export interface OrganizationRepositoryInterface {
+  createWithMemberAndAudit(
+    data: Prisma.OrganizationCreateInput,
+    ownerUserId: string,
+    audit: AuditEvent,
+  ): Promise<Organization>;
+  existsBySlug(slug: string): Promise<boolean>;
+  findById(id: string): Promise<Organization | null>;
+}

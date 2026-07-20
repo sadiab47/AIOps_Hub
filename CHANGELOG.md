@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Organization Creation**: Exposed `POST /api/v1/organizations` to create organizations with automatic owner membership assignment and audit logging in an atomic transaction.
+- **Tenant Context Resolution**: Created `TenantContextGuard` to extract and validate `x-organization-id` from headers.
+- **Membership Validation**: Created `MembershipGuard` to check active user-organization memberships.
+- **Sequential Slug Suffixing**: Implemented auto-generating slugs with sequential suffixing (e.g. `acme`, `acme-2`) on name duplicates.
+- **Request Context Standardization**: Standardized `request.context` container for multi-tenant tracing.
+
 ---
 
 ## [0.1.0] - 2026-07-17

@@ -7,10 +7,16 @@ export interface UserPayload {
 }
 
 export const CurrentUser = createParamDecorator(
-  (data: keyof UserPayload | undefined, ctx: ExecutionContext) => {
+  (data: string | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    const user = request.user as UserPayload;
+    const context = request.context || {};
 
-    return data && user ? user[data] : user;
+    if (data === 'sub' || data === 'userId') {
+      return context.userId;
+    }
+    if (data === 'sessionId') {
+      return context.sessionId;
+    }
+    return data ? context[data as keyof typeof context] : context;
   },
 );
