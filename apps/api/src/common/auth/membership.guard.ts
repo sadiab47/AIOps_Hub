@@ -16,6 +16,10 @@ export class MembershipGuard implements CanActivate {
       throw new ForbiddenException('User session or tenant context is missing');
     }
 
+    if (requestContext.organizationRole) {
+      return true;
+    }
+
     const membership = await this.memberRepository.findMembership(
       requestContext.userId,
       requestContext.organizationId,

@@ -4,6 +4,12 @@ export interface RequestContext {
   sessionId?: string;
   organizationId?: string;
   organizationRole?: string;
+  organizationName?: string;
+  organizationSlug?: string;
+  organizationSettings?: {
+    timezone: string;
+    locale: string;
+  } | null;
   requestId?: string;
 }
 

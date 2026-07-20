@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { OrganizationsService } from '../services/organizations.service';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { Organization } from '@aiops-hub/db';
@@ -12,6 +13,8 @@ describe('OrganizationsService', () => {
       createWithMemberAndAudit: jest.fn(),
       existsBySlug: jest.fn(),
       findById: jest.fn(),
+      findUserOrganizations: jest.fn(),
+      findOrganizationContext: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -90,6 +93,49 @@ describe('OrganizationsService', () => {
         expect.any(Object),
       );
       expect(result).toEqual(mockOrg);
+    });
+  });
+
+  describe('listUserOrganizations', () => {
+    it('should retrieve organizations list with roles from repository', async () => {
+      const mockList = [{ id: 'org-1', name: 'Org 1', slug: 'org-1', role: 'MEMBER' }] as any;
+      organizationRepository.findUserOrganizations.mockResolvedValue(mockList);
+
+      const result = await service.listUserOrganizations('user-uuid');
+
+      expect(organizationRepository.findUserOrganizations).toHaveBeenCalledWith('user-uuid');
+      expect(result).toEqual(mockList);
+    });
+  });
+
+  describe('switchOrganization', () => {
+    it('should throw ForbiddenException if user has no membership in organization', async () => {
+      organizationRepository.findOrganizationContext.mockResolvedValue(null);
+      await expect(service.switchOrganization('user-uuid', 'org-uuid')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return context schema if membership is valid', async () => {
+      const mockContext = {
+        organization: { id: 'org-uuid', name: 'Acme', slug: 'acme' },
+        membership: { role: 'ADMIN' },
+        settings: { timezone: 'EST', locale: 'en' },
+      } as any;
+      organizationRepository.findOrganizationContext.mockResolvedValue(mockContext);
+
+      const result = await service.switchOrganization('user-uuid', 'org-uuid');
+
+      expect(organizationRepository.findOrganizationContext).toHaveBeenCalledWith('user-uuid', 'org-uuid');
+      expect(result).toEqual({
+        id: 'org-uuid',
+        name: 'Acme',
+        slug: 'acme',
+        role: 'ADMIN',
+        permissions: [],
+        settings: {
+          timezone: 'EST',
+          locale: 'en',
+        },
+      });
     });
   });
 });

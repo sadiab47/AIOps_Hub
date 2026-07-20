@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/database/prisma.service';
 import { OrganizationRepositoryInterface, AuditEvent } from './organization-repository.interface';
-import { Organization, Prisma, OrgRole } from '@aiops-hub/db';
+import { Organization, Prisma, OrgRole, Member, OrganizationSettings } from '@aiops-hub/db';
 
 @Injectable()
 export class OrganizationRepository implements OrganizationRepositoryInterface {
@@ -68,5 +68,66 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
         deletedAt: null,
       },
     });
+  }
+
+  async findUserOrganizations(userId: string): Promise<(Organization & { role: string })[]> {
+    const memberships = await this.prisma.member.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        organization: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        organization: true,
+      },
+    });
+
+    return memberships.map((m) => ({
+      ...m.organization,
+      role: m.role,
+    }));
+  }
+
+  async findOrganizationContext(
+    userId: string,
+    orgId: string,
+  ): Promise<{
+    organization: Organization;
+    membership: Member;
+    settings: OrganizationSettings | null;
+  } | null> {
+    const membership = await this.prisma.member.findFirst({
+      where: {
+        userId,
+        organizationId: orgId,
+        deletedAt: null,
+      },
+      include: {
+        organization: {
+          include: {
+            settings: true,
+          },
+        },
+      },
+    });
+
+    if (!membership) {
+      return null;
+    }
+
+    const { organization } = membership;
+    const { settings } = organization;
+
+    // Disconnect settings from organization relation before returning
+    const cleanedOrg = { ...organization };
+    delete (cleanedOrg as any).settings;
+
+    return {
+      organization: cleanedOrg,
+      membership,
+      settings,
+    };
   }
 }

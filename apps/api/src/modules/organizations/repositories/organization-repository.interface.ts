@@ -1,4 +1,4 @@
-import { Organization, Prisma } from '@aiops-hub/db';
+import { Organization, Prisma, Member, OrganizationSettings } from '@aiops-hub/db';
 
 export const ORGANIZATION_REPOSITORY_TOKEN = 'OrganizationRepositoryInterface';
 
@@ -19,4 +19,10 @@ export interface OrganizationRepositoryInterface {
   ): Promise<Organization>;
   existsBySlug(slug: string): Promise<boolean>;
   findById(id: string): Promise<Organization | null>;
+  findUserOrganizations(userId: string): Promise<(Organization & { role: string })[]>;
+  findOrganizationContext(userId: string, orgId: string): Promise<{
+    organization: Organization;
+    membership: Member;
+    settings: OrganizationSettings | null;
+  } | null>;
 }

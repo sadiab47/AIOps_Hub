@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface, AuditEvent } from '../repositories/organization-repository.interface';
 import { Organization } from '@aiops-hub/db';
 
@@ -49,5 +49,38 @@ export class OrganizationsService {
       userId,
       audit,
     );
+  }
+
+  async listUserOrganizations(userId: string) {
+    return this.organizationRepository.findUserOrganizations(userId);
+  }
+
+  async switchOrganization(userId: string, orgId: string) {
+    const context = await this.organizationRepository.findOrganizationContext(userId, orgId);
+
+    if (!context) {
+      throw new ForbiddenException('You do not have access to this organization');
+    }
+
+    // TODO: Switch safety checks
+    // 1. Check if organization is archived
+    // if (context.organization.status === 'ARCHIVED') throw new ForbiddenException('Organization is archived');
+    // 2. Check if organization is deleted
+    // if (context.organization.deletedAt) throw new ForbiddenException('Organization has been deleted');
+
+    return {
+      id: context.organization.id,
+      name: context.organization.name,
+      slug: context.organization.slug,
+      role: context.membership.role,
+      permissions: [],
+      settings: context.settings ? {
+        timezone: context.settings.timezone,
+        locale: context.settings.locale,
+      } : {
+        timezone: 'UTC',
+        locale: 'en',
+      },
+    };
   }
 }

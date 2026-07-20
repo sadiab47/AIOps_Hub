@@ -21,14 +21,42 @@ export class TenantContextGuard implements CanActivate {
       throw new BadRequestException('Invalid Organization ID format');
     }
 
-    const exists = await this.organizationRepository.findById(organizationId);
-    if (!exists) {
-      throw new NotFoundException('Organization not found');
+    const userId = request.context?.userId;
+    let organization;
+    let membership = null;
+    let settings = null;
+
+    if (userId) {
+      const contextResult = await this.organizationRepository.findOrganizationContext(userId, organizationId);
+      if (contextResult) {
+        organization = contextResult.organization;
+        membership = contextResult.membership;
+        settings = contextResult.settings;
+      } else {
+        const org = await this.organizationRepository.findById(organizationId);
+        if (!org) {
+          throw new NotFoundException('Organization not found');
+        }
+        organization = org;
+      }
+    } else {
+      const org = await this.organizationRepository.findById(organizationId);
+      if (!org) {
+        throw new NotFoundException('Organization not found');
+      }
+      organization = org;
     }
 
     request.context = {
       ...request.context,
       organizationId,
+      organizationName: organization.name,
+      organizationSlug: organization.slug,
+      organizationRole: membership?.role,
+      organizationSettings: settings ? {
+        timezone: settings.timezone,
+        locale: settings.locale,
+      } : null,
     };
 
     return true;

@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Invitation Status Tracking**: Added `InvitationStatus` enum (`PENDING`, `ACCEPTED`, `REVOKED`, `EXPIRED`).
 - **Role validation**: Enforced validation blocking invitations with `OWNER` role.
 - **Roles Guard (RBAC)**: Added `@Roles()` decorator and `RolesGuard` for declarative controller authorization.
+- **Organization Switching**: Exposed `POST /api/v1/organizations/switch` to validate membership and issue organization contexts, and `GET /api/v1/organizations` to retrieve a list of organizations the user belongs to.
+- **Request Context Enrichment**: Enriched `request.context` with timezone and locale preferences from `OrganizationSettings`.
+- **Query Context Consolidation**: Added repository resolution methods to fetch organization, member, and settings contexts in a single database query, optimizing performance and eliminating N+1 DB roundtrips.
 
 ---
 

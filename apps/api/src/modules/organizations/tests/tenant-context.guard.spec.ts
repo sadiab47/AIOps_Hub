@@ -12,6 +12,7 @@ describe('TenantContextGuard', () => {
       createWithMemberAndAudit: jest.fn(),
       existsBySlug: jest.fn(),
       findById: jest.fn(),
+      findOrganizationContext: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -65,7 +66,7 @@ describe('TenantContextGuard', () => {
 
   it('should set request.context.organizationId and return true if organization exists', async () => {
     const validUuid = '12345678-1234-1234-1234-1234567890ab';
-    organizationRepository.findById.mockResolvedValue({ id: validUuid } as any);
+    organizationRepository.findById.mockResolvedValue({ id: validUuid, name: 'Acme', slug: 'acme' } as any);
     const reqProps = { context: {} };
     const context = createMockContext({ 'x-organization-id': validUuid }, reqProps);
 
@@ -73,6 +74,12 @@ describe('TenantContextGuard', () => {
 
     const req = context.switchToHttp().getRequest();
     expect(result).toBe(true);
-    expect(req.context).toEqual({ organizationId: validUuid });
+    expect(req.context).toEqual({
+      organizationId: validUuid,
+      organizationName: 'Acme',
+      organizationSlug: 'acme',
+      organizationRole: undefined,
+      organizationSettings: null,
+    });
   });
 });
