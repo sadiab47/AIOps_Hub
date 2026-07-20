@@ -1,8 +1,10 @@
 import { Injectable, Inject, ForbiddenException, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface, AuditEvent } from '../repositories/organization-repository.interface';
+import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
 import { Organization, OrgRole } from '@aiops-hub/db';
 import { RESERVED_SLUGS } from '../../../common/constants/reserved-slugs';
+import { EventBusService } from '../../../common/events/event-bus.service';
+import { OrganizationCreatedEvent, OrganizationUpdatedEvent, OrganizationSettingsUpdatedEvent, SlugChangedEvent } from '../../../common/events/types/organization.events';
 
 export function slugify(text: string): string {
   return text
@@ -23,6 +25,7 @@ export class OrganizationsService {
     private organizationRepository: OrganizationRepositoryInterface,
     @Inject(MEMBER_REPOSITORY_TOKEN)
     private memberRepository: MemberRepositoryInterface,
+    private readonly eventBus: EventBusService,
   ) {}
 
   async create(
@@ -40,19 +43,24 @@ export class OrganizationsService {
       suffix++;
     }
 
-    const audit: AuditEvent = {
-      action: 'ORGANIZATION_CREATE',
-      entityName: 'organization',
-      ipAddress,
-      userAgent,
-      details: { name, slug },
-    };
-
-    return this.organizationRepository.createWithMemberAndAudit(
+    const org = await this.organizationRepository.createWithMemberAndAudit(
       { name, slug },
       userId,
-      audit,
     );
+
+    this.eventBus.publish(new OrganizationCreatedEvent({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      ownerUserId: userId,
+    }, {
+      userId,
+      ipAddress,
+      userAgent,
+      organizationId: org.id,
+    }));
+
+    return org;
   }
 
   async listUserOrganizations(userId: string) {
@@ -106,18 +114,17 @@ export class OrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    const audits: any[] = [];
     const orgUpdateData: any = {};
     const settingsUpdateData: any = {};
 
     // 2. Process profile if present
     if (dto.profile) {
-      await this.updateOrganizationProfile(orgId, dto.profile, org, orgUpdateData, audits, userId, ipAddress, userAgent);
+      await this.updateOrganizationProfile(orgId, dto.profile, org, orgUpdateData);
     }
 
     // 3. Process settings if present
     if (dto.settings) {
-      this.updateOrganizationSettings(dto.settings, settingsUpdateData, audits, userId, orgId, ipAddress, userAgent);
+      this.updateOrganizationSettings(dto.settings, settingsUpdateData);
     }
 
     // If no changes, return without transaction to avoid no-op query overhead
@@ -133,8 +140,33 @@ export class OrganizationsService {
       orgId,
       orgUpdateData,
       settingsUpdateData,
-      audits,
     );
+
+    // 4. Dispatch Domain Events post-commit
+    const correlation = { userId, ipAddress, userAgent, organizationId: orgId };
+
+    if (orgUpdateData.name !== undefined) {
+      this.eventBus.publish(new OrganizationUpdatedEvent({
+        id: orgId,
+        oldName: org.name,
+        newName: orgUpdateData.name,
+      }, correlation));
+    }
+
+    if (orgUpdateData.slug !== undefined) {
+      this.eventBus.publish(new SlugChangedEvent({
+        id: orgId,
+        oldSlug: org.slug,
+        newSlug: orgUpdateData.slug,
+      }, correlation));
+    }
+
+    if (Object.keys(settingsUpdateData).length > 0) {
+      this.eventBus.publish(new OrganizationSettingsUpdatedEvent({
+        id: orgId,
+        changedFields: settingsUpdateData,
+      }, correlation));
+    }
 
     return result;
   }
@@ -144,22 +176,9 @@ export class OrganizationsService {
     profileDto: { name?: string; slug?: string },
     org: Organization,
     orgUpdateData: any,
-    audits: any[],
-    userId: string,
-    ipAddress?: string | null,
-    userAgent?: string | null,
   ) {
     if (profileDto.name !== undefined && profileDto.name !== org.name) {
       orgUpdateData.name = profileDto.name;
-      audits.push({
-        userId,
-        action: 'ORGANIZATION_UPDATED',
-        entityName: 'organization',
-        entityId: orgId,
-        details: { field: 'name', old: org.name, new: profileDto.name },
-        ipAddress,
-        userAgent,
-      });
     }
 
     if (profileDto.slug !== undefined && profileDto.slug !== org.slug) {
@@ -186,26 +205,12 @@ export class OrganizationsService {
       }
 
       orgUpdateData.slug = profileDto.slug;
-      audits.push({
-        userId,
-        action: 'SLUG_CHANGED',
-        entityName: 'organization',
-        entityId: orgId,
-        details: { old: org.slug, new: profileDto.slug },
-        ipAddress,
-        userAgent,
-      });
     }
   }
 
   private updateOrganizationSettings(
     settingsDto: any,
     settingsUpdateData: any,
-    audits: any[],
-    userId: string,
-    orgId: string,
-    ipAddress?: string | null,
-    userAgent?: string | null,
   ) {
     const fields = [
       'timezone',
@@ -219,9 +224,6 @@ export class OrganizationsService {
       'allowPublicInvitations',
       'retentionDays',
     ];
-
-    let hasSettingChanges = false;
-    const changedFields: Record<string, any> = {};
 
     for (const field of fields) {
       if (settingsDto[field] !== undefined) {
@@ -241,21 +243,7 @@ export class OrganizationsService {
         }
 
         settingsUpdateData[field] = settingsDto[field];
-        changedFields[field] = settingsDto[field];
-        hasSettingChanges = true;
       }
-    }
-
-    if (hasSettingChanges) {
-      audits.push({
-        userId,
-        action: 'SETTINGS_UPDATED',
-        entityName: 'organization_settings',
-        entityId: orgId,
-        details: changedFields,
-        ipAddress,
-        userAgent,
-      });
     }
   }
 }

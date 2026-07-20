@@ -10,7 +10,6 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
   async createWithMemberAndAudit(
     data: Prisma.OrganizationCreateInput,
     ownerUserId: string,
-    audit: AuditEvent,
   ): Promise<Organization> {
     return this.prisma.$transaction(async (tx) => {
       // 1. Create the Organization
@@ -31,19 +30,6 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
           organizationId: org.id,
           timezone: 'UTC',
           locale: 'en',
-        },
-      });
-
-      // 4. Create Audit Log
-      await tx.auditLog.create({
-        data: {
-          userId: ownerUserId,
-          action: audit.action,
-          entityName: audit.entityName,
-          entityId: org.id,
-          details: audit.details ? (audit.details as any) : undefined,
-          ipAddress: audit.ipAddress,
-          userAgent: audit.userAgent,
         },
       });
 
@@ -146,7 +132,6 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
     orgId: string,
     orgData: Prisma.OrganizationUpdateInput,
     settingsData: Prisma.OrganizationSettingsUpdateWithoutOrganizationInput,
-    audits: { userId: string; action: string; entityName: string; entityId: string; details?: any; ipAddress?: string | null; userAgent?: string | null }[],
   ): Promise<{ organization: Organization; settings: OrganizationSettings }> {
     return this.prisma.$transaction(async (tx) => {
       const organization = await tx.organization.update({
@@ -158,20 +143,6 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
         where: { organizationId: orgId },
         data: settingsData,
       });
-
-      for (const audit of audits) {
-        await tx.auditLog.create({
-          data: {
-            userId: audit.userId,
-            action: audit.action,
-            entityName: audit.entityName,
-            entityId: audit.entityId,
-            details: audit.details ? (audit.details as any) : undefined,
-            ipAddress: audit.ipAddress,
-            userAgent: audit.userAgent,
-          },
-        });
-      }
 
       return { organization, settings };
     });

@@ -15,7 +15,6 @@ export interface OrganizationRepositoryInterface {
   createWithMemberAndAudit(
     data: Prisma.OrganizationCreateInput,
     ownerUserId: string,
-    audit: AuditEvent,
   ): Promise<Organization>;
   existsBySlug(slug: string): Promise<boolean>;
   existsBySlugExcept(slug: string, orgId: string): Promise<boolean>;
@@ -30,6 +29,5 @@ export interface OrganizationRepositoryInterface {
     orgId: string,
     orgData: Prisma.OrganizationUpdateInput,
     settingsData: Prisma.OrganizationSettingsUpdateWithoutOrganizationInput,
-    audits: { userId: string; action: string; entityName: string; entityId: string; details?: any; ipAddress?: string | null; userAgent?: string | null }[],
   ): Promise<{ organization: Organization; settings: OrganizationSettings }>;
 }

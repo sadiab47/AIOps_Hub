@@ -15,6 +15,5 @@ export interface InvitationRepositoryInterface {
     userId: string,
     orgId: string,
     role: OrgRole,
-    audit: AuditEvent,
   ): Promise<Member>;
 }

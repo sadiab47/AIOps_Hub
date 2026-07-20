@@ -7,6 +7,7 @@ import { HealthModule } from './modules/health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { EventsModule } from './common/events/events.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
         } : undefined,
       },
     }),
+    EventsModule,
     DatabaseModule,
     HealthModule,
     UsersModule,

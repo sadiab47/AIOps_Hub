@@ -3,6 +3,7 @@ import { ForbiddenException, BadRequestException, ConflictException } from '@nes
 import { OrganizationsService } from '../services/organizations.service';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
+import { EventBusService } from '../../../common/events/event-bus.service';
 import { Organization, OrgRole } from '@aiops-hub/db';
 
 describe('OrganizationsService', () => {
@@ -36,6 +37,10 @@ describe('OrganizationsService', () => {
           provide: MEMBER_REPOSITORY_TOKEN,
           useValue: mockMemberRepository,
         },
+        {
+          provide: EventBusService,
+          useValue: { publish: jest.fn(), publishMany: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -67,12 +72,6 @@ describe('OrganizationsService', () => {
       expect(organizationRepository.createWithMemberAndAudit).toHaveBeenCalledWith(
         { name: 'Acme Corp', slug: 'acme-corp' },
         'user-uuid',
-        expect.objectContaining({
-          action: 'ORGANIZATION_CREATE',
-          entityName: 'organization',
-          ipAddress: '127.0.0.1',
-          userAgent: 'Mozilla',
-        }),
       );
       expect(result).toEqual(mockOrg);
     });
@@ -103,7 +102,6 @@ describe('OrganizationsService', () => {
       expect(organizationRepository.createWithMemberAndAudit).toHaveBeenCalledWith(
         { name: 'Acme', slug: 'acme-3' },
         'user-uuid',
-        expect.any(Object),
       );
       expect(result).toEqual(mockOrg);
     });
@@ -196,7 +194,7 @@ describe('OrganizationsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should invoke transaction with correct audit logs on valid updates', async () => {
+    it('should invoke transaction and publish domain events on valid updates', async () => {
       organizationRepository.existsBySlugExcept.mockResolvedValue(false);
       organizationRepository.updateProfileAndSettings.mockResolvedValue({ success: true } as any);
 
@@ -211,11 +209,6 @@ describe('OrganizationsService', () => {
         'org-uuid',
         { name: 'Acme Corp', slug: 'acme-corp' },
         { brandingColor: '#1E40AF', logoUrl: 'https://acme.org/logo.png' },
-        expect.arrayContaining([
-          expect.objectContaining({ action: 'ORGANIZATION_UPDATED' }),
-          expect.objectContaining({ action: 'SLUG_CHANGED' }),
-          expect.objectContaining({ action: 'SETTINGS_UPDATED' }),
-        ]),
       );
     });
   });

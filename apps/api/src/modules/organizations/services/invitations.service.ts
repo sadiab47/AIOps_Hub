@@ -2,10 +2,11 @@ import { Injectable, Inject, BadRequestException, ConflictException, NotFoundExc
 import * as crypto from 'crypto';
 import { INVITATION_REPOSITORY_TOKEN, InvitationRepositoryInterface } from '../repositories/invitation-repository.interface';
 import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
-import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface, AuditEvent } from '../repositories/organization-repository.interface';
+import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
-import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../../common/database/audit-log-repository.interface';
 import { Invitation, Member, OrgRole, InvitationStatus } from '@aiops-hub/db';
+import { EventBusService } from '../../../common/events/event-bus.service';
+import { MemberJoinedEvent, InvitationAcceptedEvent, InvitationRevokedEvent } from '../../../common/events/types/member.events';
 
 export function generateToken(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -26,8 +27,7 @@ export class InvitationsService {
     private readonly organizationRepository: OrganizationRepositoryInterface,
     @Inject(USER_REPOSITORY_TOKEN)
     private readonly userRepository: UserRepositoryInterface,
-    @Inject(AUDIT_LOG_REPOSITORY_TOKEN)
-    private readonly auditLogRepository: AuditLogRepositoryInterface,
+    private readonly eventBus: EventBusService,
   ) {}
 
   async invite(
@@ -132,21 +132,30 @@ export class InvitationsService {
       return existingMember;
     }
 
-    const audit: AuditEvent = {
-      action: 'MEMBER_JOINED',
-      entityName: 'member',
-      ipAddress,
-      userAgent,
-      details: { invitationId: invite.id, email: invite.email, role: invite.role },
-    };
-
-    return this.invitationRepository.acceptInvitationTx(
+    const member = await this.invitationRepository.acceptInvitationTx(
       invite.id,
       userId,
       invite.organizationId,
       invite.role,
-      audit,
     );
+
+    // Publish events post-commit
+    const correlation = { userId, ipAddress, userAgent, organizationId: invite.organizationId };
+    
+    this.eventBus.publish(new InvitationAcceptedEvent({
+      invitationId: invite.id,
+      organizationId: invite.organizationId,
+      email: invite.email,
+      role: invite.role,
+    }, correlation));
+
+    this.eventBus.publish(new MemberJoinedEvent({
+      organizationId: invite.organizationId,
+      userId,
+      role: invite.role,
+    }, correlation));
+
+    return member;
   }
 
   async revoke(
@@ -172,36 +181,22 @@ export class InvitationsService {
       deletedAt: new Date(),
     });
 
-    // Create Audit Log inside transaction or directly (it is non-atomic for membership creation, so directly is fine here)
-    // Actually, we can just create the audit log using Prisma directly or via OrganizationRepository
-    const audit: AuditEvent = {
-      action: 'INVITATION_REVOKED',
-      entityName: 'invitation',
-      entityId: invite.id,
+    // Publish event post-commit
+    this.eventBus.publish(new InvitationRevokedEvent({
+      invitationId: invite.id,
+      organizationId: orgId,
+      revokedByUserId: revokedById,
+    }, {
+      userId: revokedById,
       ipAddress,
       userAgent,
-      details: { email: invite.email, role: invite.role },
-    };
-
-    await this.prismaAuditLog(revokedById, audit);
+      organizationId: orgId,
+    }));
 
     return updated;
   }
 
   async listPending(orgId: string): Promise<Invitation[]> {
     return this.invitationRepository.listPendingByOrg(orgId);
-  }
-
-  // Helper to log audit events
-  private async prismaAuditLog(userId: string, audit: AuditEvent) {
-    await this.auditLogRepository.create({
-      userId,
-      action: audit.action,
-      entityName: audit.entityName,
-      entityId: audit.entityId || null,
-      details: audit.details ? (audit.details as any) : undefined,
-      ipAddress: audit.ipAddress,
-      userAgent: audit.userAgent,
-    });
   }
 }

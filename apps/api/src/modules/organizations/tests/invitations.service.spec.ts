@@ -5,7 +5,7 @@ import { INVITATION_REPOSITORY_TOKEN, InvitationRepositoryInterface } from '../r
 import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
-import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../../common/database/audit-log-repository.interface';
+import { EventBusService } from '../../../common/events/event-bus.service';
 import { OrgRole, InvitationStatus } from '@aiops-hub/db';
 
 describe('InvitationsService', () => {
@@ -14,7 +14,7 @@ describe('InvitationsService', () => {
   let memberRepository: jest.Mocked<MemberRepositoryInterface>;
   let organizationRepository: jest.Mocked<OrganizationRepositoryInterface>;
   let userRepository: jest.Mocked<UserRepositoryInterface>;
-  let auditLogRepository: jest.Mocked<AuditLogRepositoryInterface>;
+  let eventBus: jest.Mocked<EventBusService>;
 
   beforeEach(async () => {
     const mockInvitationRepository = {
@@ -41,9 +41,8 @@ describe('InvitationsService', () => {
       update: jest.fn(),
       updateLastLogin: jest.fn(),
     };
-    const mockAuditLogRepository = {
-      create: jest.fn(),
-    };
+    const mockAuditLogRepository = { create: jest.fn() }; // kept for repo-level calls if any
+    const mockEventBus = { publish: jest.fn(), publishMany: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,7 +51,7 @@ describe('InvitationsService', () => {
         { provide: MEMBER_REPOSITORY_TOKEN, useValue: mockMemberRepository },
         { provide: ORGANIZATION_REPOSITORY_TOKEN, useValue: mockOrganizationRepository },
         { provide: USER_REPOSITORY_TOKEN, useValue: mockUserRepository },
-        { provide: AUDIT_LOG_REPOSITORY_TOKEN, useValue: mockAuditLogRepository },
+        { provide: EventBusService, useValue: mockEventBus },
       ],
     }).compile();
 
@@ -61,7 +60,7 @@ describe('InvitationsService', () => {
     memberRepository = module.get(MEMBER_REPOSITORY_TOKEN);
     organizationRepository = module.get(ORGANIZATION_REPOSITORY_TOKEN);
     userRepository = module.get(USER_REPOSITORY_TOKEN);
-    auditLogRepository = module.get(AUDIT_LOG_REPOSITORY_TOKEN);
+    eventBus = module.get(EventBusService);
   });
 
   it('should be defined', () => {

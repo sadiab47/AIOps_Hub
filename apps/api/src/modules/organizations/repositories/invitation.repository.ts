@@ -66,7 +66,6 @@ export class InvitationRepository implements InvitationRepositoryInterface {
     userId: string,
     orgId: string,
     role: OrgRole,
-    audit: AuditEvent,
   ): Promise<Member> {
     return this.prisma.$transaction(async (tx) => {
       // 1. Update invitation status to ACCEPTED
@@ -84,19 +83,6 @@ export class InvitationRepository implements InvitationRepositoryInterface {
           userId,
           organizationId: orgId,
           role,
-        },
-      });
-
-      // 3. Log Audit event
-      await tx.auditLog.create({
-        data: {
-          userId,
-          action: audit.action,
-          entityName: audit.entityName,
-          entityId: orgId,
-          details: audit.details ? (audit.details as any) : undefined,
-          ipAddress: audit.ipAddress,
-          userAgent: audit.userAgent,
         },
       });
 

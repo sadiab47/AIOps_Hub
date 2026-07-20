@@ -227,6 +227,9 @@ describe('Organizations Integration Tests (ORG-001)', () => {
     expect(updateRes.body.data.organization.name).toBe('Acme Renamed');
     expect(updateRes.body.data.settings.brandingColor).toBe('#1E40AF');
 
+    // Allow async EventBus listeners time to persist audit logs before querying
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     // Verify Audit Logs exist in Database
     const audits = await prisma.auditLog.findMany({ where: { entityId: orgId } });
     const actions = audits.map((a) => a.action);
