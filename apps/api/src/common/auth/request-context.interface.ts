@@ -10,6 +10,7 @@ export interface RequestContext {
     timezone: string;
     locale: string;
   } | null;
+  permissions?: string[];
   requestId?: string;
 }
 

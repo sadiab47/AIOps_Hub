@@ -80,6 +80,7 @@ describe('TenantContextGuard', () => {
       organizationSlug: 'acme',
       organizationRole: undefined,
       organizationSettings: null,
+      permissions: [],
     });
   });
 });

@@ -57,6 +57,7 @@ export class TenantContextGuard implements CanActivate {
         timezone: settings.timezone,
         locale: settings.locale,
       } : null,
+      permissions: [],
     };
 
     return true;
