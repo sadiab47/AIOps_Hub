@@ -4,6 +4,7 @@ import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositor
 import { Organization, OrgRole } from '@aiops-hub/db';
 import { RESERVED_SLUGS } from '../../../common/constants/reserved-slugs';
 import { EventBusService } from '../../../common/events/event-bus.service';
+import { getPermissionsForRole } from '../../../common/constants/role-permission-matrix';
 import { OrganizationCreatedEvent, OrganizationUpdatedEvent, OrganizationSettingsUpdatedEvent, SlugChangedEvent } from '../../../common/events/types/organization.events';
 
 export function slugify(text: string): string {
@@ -79,13 +80,12 @@ export class OrganizationsService {
     // if (context.organization.status === 'ARCHIVED') throw new ForbiddenException('Organization is archived');
     // 2. Check if organization is deleted
     // if (context.organization.deletedAt) throw new ForbiddenException('Organization has been deleted');
-
     return {
       id: context.organization.id,
       name: context.organization.name,
       slug: context.organization.slug,
       role: context.membership.role,
-      permissions: [],
+      permissions: getPermissionsForRole(context.membership.role as OrgRole),
       settings: context.settings ? {
         timezone: context.settings.timezone,
         locale: context.settings.locale,

@@ -1,3 +1,5 @@
+import { Permission } from '../constants/permissions';
+
 export interface RequestContext {
   userId?: string;
   email?: string;
@@ -10,7 +12,7 @@ export interface RequestContext {
     timezone: string;
     locale: string;
   } | null;
-  permissions?: string[];
+  permissions?: ReadonlyArray<Permission>;
   requestId?: string;
 }
 

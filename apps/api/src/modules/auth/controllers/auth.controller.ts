@@ -38,13 +38,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(dto);
-    
     this.cookieService.setAuthCookies(res, result.tokens.accessToken, result.tokens.refreshToken);
-
-    return {
-      success: true,
-      data: result.user,
-    };
+    return result.user;
   }
 
   @Post('login')
@@ -74,18 +69,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.login(dto, ip || null, userAgent || null);
-
     this.cookieService.setAuthCookies(res, result.tokens.accessToken, result.tokens.refreshToken);
-
-    return {
-      success: true,
-      data: result.user,
-    };
+    return result.user;
   }
 
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({ summary: 'Rotate active session refresh and access tokens' })
+  @ApiCookieAuth('aiops_refresh_token')
   @ApiResponse({
     status: 200,
     description: 'Tokens rotated successfully and new secure cookies attached.',
@@ -110,17 +101,14 @@ export class AuthController {
     }
 
     const result = await this.authService.refreshSession(refreshToken, ip || null, userAgent || null);
-
     this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
-
-    return {
-      success: true,
-    };
+    return { message: 'Session refreshed successfully' };
   }
 
   @Post('logout')
   @HttpCode(200)
   @ApiOperation({ summary: 'Log out from current session and clear auth cookies' })
+  @ApiCookieAuth('aiops_refresh_token')
   @ApiResponse({
     status: 200,
     description: 'Current session invalidated and auth cookies cleared (idempotent).',
@@ -141,16 +129,13 @@ export class AuthController {
 
     await this.authService.logout(refreshToken, ip || null, userAgent || null);
     this.cookieService.clearAuthCookies(res);
-
-    return {
-      success: true,
-      message: 'Logged out successfully.',
-    };
+    return { message: 'Logged out successfully.' };
   }
 
   @Post('logout-all')
   @HttpCode(200)
   @ApiOperation({ summary: 'Log out from all active multi-device sessions' })
+  @ApiCookieAuth('aiops_refresh_token')
   @ApiResponse({
     status: 200,
     description: 'All active user sessions invalidated and auth cookies cleared (idempotent).',
@@ -171,16 +156,12 @@ export class AuthController {
 
     await this.authService.logoutAll(refreshToken, ip || null, userAgent || null);
     this.cookieService.clearAuthCookies(res);
-
-    return {
-      success: true,
-      message: 'All sessions logged out successfully.',
-    };
+    return { message: 'All sessions logged out successfully.' };
   }
 
   @Get('me')
   @UseGuards(JwtAccessGuard)
-  @ApiCookieAuth()
+  @ApiCookieAuth('aiops_access_token')
   @ApiOperation({ summary: 'Get current authenticated user profile' })
   @ApiResponse({
     status: 200,
@@ -189,10 +170,6 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Missing, invalid, or expired access token.' })
   async me(@CurrentUser('sub') userId: string) {
-    const profile = await this.usersService.getCurrentProfile(userId);
-    return {
-      success: true,
-      data: profile,
-    };
+    return this.usersService.getCurrentProfile(userId);
   }
 }

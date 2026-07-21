@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, BadRequestException, NotFoundException } from '@nestjs/common';
 import { TenantContextGuard } from '../../../common/auth/tenant-context.guard';
+import { AuthorizationService } from '../../../common/auth/authorization.service';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
+import { OrgRole } from '@aiops-hub/db';
 
 describe('TenantContextGuard', () => {
   let guard: TenantContextGuard;
@@ -18,6 +20,7 @@ describe('TenantContextGuard', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantContextGuard,
+        AuthorizationService,
         {
           provide: ORGANIZATION_REPOSITORY_TOKEN,
           useValue: mockOrganizationRepository,
@@ -82,5 +85,24 @@ describe('TenantContextGuard', () => {
       organizationSettings: null,
       permissions: [],
     });
+  });
+
+  it('should populate request.context.permissions based on membership.role', async () => {
+    const validUuid = '12345678-1234-1234-1234-1234567890ab';
+    organizationRepository.findOrganizationContext.mockResolvedValue({
+      organization: { id: validUuid, name: 'Acme', slug: 'acme' },
+      membership: { role: OrgRole.ADMIN },
+      settings: null,
+    } as any);
+
+    const reqProps = { context: { userId: 'user-1' } };
+    const context = createMockContext({ 'x-organization-id': validUuid }, reqProps);
+
+    await guard.canActivate(context);
+
+    const req = context.switchToHttp().getRequest();
+    expect(req.context.organizationRole).toBe(OrgRole.ADMIN);
+    expect(req.context.permissions).toContain('member:remove');
+    expect(req.context.permissions).toContain('settings:update');
   });
 });

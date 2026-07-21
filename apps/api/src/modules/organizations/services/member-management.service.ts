@@ -10,6 +10,7 @@ import {
   MEMBER_REPOSITORY_TOKEN,
   MemberRepositoryInterface,
 } from '../repositories/member-repository.interface';
+import { AuthorizationService } from '../../../common/auth/authorization.service';
 import { EventBusService } from '../../../common/events/event-bus.service';
 import { EventCorrelationContext } from '../../../common/events/domain-event';
 import {
@@ -19,12 +20,14 @@ import {
   MemberLeftEvent,
 } from '../../../common/events/types/member.events';
 import { MemberSummaryDto } from '../dto/member-summary.dto';
+import { RequestContext } from '../../../common/auth/request-context.interface';
 
 @Injectable()
 export class MemberManagementService {
   constructor(
     @Inject(MEMBER_REPOSITORY_TOKEN)
     private readonly memberRepository: MemberRepositoryInterface,
+    private readonly authorizationService: AuthorizationService,
     private readonly eventBus: EventBusService,
   ) {}
 
@@ -58,13 +61,21 @@ export class MemberManagementService {
     if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
     if (!target) throw new NotFoundException('Member not found in this organization');
 
-    if (target.userId === actorId) {
-      throw new ForbiddenException('You cannot change your own role');
+    const actorCtx: RequestContext = {
+      userId: actorId,
+      organizationId: orgId,
+      organizationRole: actorMembership.role,
+      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+    };
+
+    // Evaluate policy-based authorization
+    const policyResult = this.authorizationService.canManageMember(actorCtx, target, newRole);
+    if (!policyResult.allowed) {
+      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      throw new ForbiddenException(policyResult.reason);
     }
 
-    this.enforceRoleConflictMatrix(actorMembership.role, target.role);
-
-    // Last-owner protection: cannot demote the sole OWNER
+    // Business Invariant: Last-owner protection (sole OWNER cannot be demoted)
     if (target.role === OrgRole.OWNER) {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
@@ -107,14 +118,21 @@ export class MemberManagementService {
     if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
     if (!target) throw new NotFoundException('Member not found in this organization');
 
-    if (target.userId === actorId) {
-      throw new ForbiddenException(
-        'You cannot remove yourself. Use the leave endpoint instead',
-      );
+    const actorCtx: RequestContext = {
+      userId: actorId,
+      organizationId: orgId,
+      organizationRole: actorMembership.role,
+      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+    };
+
+    // Evaluate policy-based authorization
+    const policyResult = this.authorizationService.canManageMember(actorCtx, target);
+    if (!policyResult.allowed) {
+      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      throw new ForbiddenException(policyResult.reason);
     }
 
-    this.enforceRoleConflictMatrix(actorMembership.role, target.role);
-
+    // Business Invariant: Last-owner protection (sole OWNER cannot be removed)
     if (target.role === OrgRole.OWNER) {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
@@ -150,16 +168,20 @@ export class MemberManagementService {
       this.memberRepository.findMemberById(targetMemberId, orgId),
     ]);
 
-    if (!actorMembership || actorMembership.role !== OrgRole.OWNER) {
-      throw new ForbiddenException('Only the current owner can transfer ownership');
-    }
+    if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
 
-    if (!target) {
-      throw new NotFoundException('Target member not found in this organization');
-    }
+    const actorCtx: RequestContext = {
+      userId: actorId,
+      organizationId: orgId,
+      organizationRole: actorMembership.role,
+      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+    };
 
-    if (target.userId === actorId) {
-      throw new ForbiddenException('You cannot transfer ownership to yourself');
+    // Evaluate policy-based authorization
+    const policyResult = this.authorizationService.canTransferOwnership(actorCtx, target);
+    if (!policyResult.allowed) {
+      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      throw new ForbiddenException(policyResult.reason);
     }
 
     await this.memberRepository.transferOwnershipTx(orgId, actorMembership.id, targetMemberId);
@@ -169,7 +191,7 @@ export class MemberManagementService {
         {
           organizationId: orgId,
           fromUserId: actorId,
-          toUserId: target.userId,
+          toUserId: target!.userId,
           toMemberId: targetMemberId,
           actorUserId: actorId,
         },
@@ -188,7 +210,7 @@ export class MemberManagementService {
       throw new ForbiddenException('You are not a member of this organization');
     }
 
-    // OWNER can leave only if other owners exist
+    // Business Invariant: OWNER can leave only if other owners exist
     if (actorMembership.role === OrgRole.OWNER) {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
@@ -214,25 +236,6 @@ export class MemberManagementService {
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
-
-  /**
-   * Enforces the role conflict matrix:
-   *   OWNER  → can act on anyone
-   *   ADMIN  → can act on MANAGER / MEMBER / VIEWER only (not OWNER or ADMIN)
-   *   Others → cannot act on anyone (shouldn't reach here if RolesGuard is applied)
-   */
-  private enforceRoleConflictMatrix(actorRole: OrgRole, targetRole: OrgRole): void {
-    if (actorRole === OrgRole.OWNER) return;
-
-    if (actorRole === OrgRole.ADMIN) {
-      if (targetRole === OrgRole.OWNER || targetRole === OrgRole.ADMIN) {
-        throw new ForbiddenException('Admins cannot modify Owners or other Admins');
-      }
-      return;
-    }
-
-    throw new ForbiddenException('Insufficient permissions to perform this action');
-  }
 
   private toSummaryDto(member: any): MemberSummaryDto {
     return {

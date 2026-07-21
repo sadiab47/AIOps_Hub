@@ -3,6 +3,7 @@ import { ForbiddenException, NotFoundException, ConflictException } from '@nestj
 import { OrgRole } from '@aiops-hub/db';
 import { MemberManagementService } from '../services/member-management.service';
 import { MEMBER_REPOSITORY_TOKEN } from '../repositories/member-repository.interface';
+import { AuthorizationService } from '../../../common/auth/authorization.service';
 import { EventBusService } from '../../../common/events/event-bus.service';
 import {
   MemberRoleChangedEvent,
@@ -58,6 +59,7 @@ describe('MemberManagementService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberManagementService,
+        AuthorizationService,
         { provide: MEMBER_REPOSITORY_TOKEN, useValue: mockMemberRepository },
         { provide: EventBusService,         useValue: mockEventBus },
       ],

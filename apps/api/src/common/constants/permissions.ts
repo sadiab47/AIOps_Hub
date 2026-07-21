@@ -1,20 +1,22 @@
+export const WILDCARD_PERMISSION = '*';
+
 export const Permissions = {
   organization: {
-    view:   'organization:view',
+    view: 'organization:view',
     update: 'organization:update',
     delete: 'organization:delete',
   },
   member: {
-    list:              'member:list',
-    view:              'member:view',
-    invite:            'member:invite',
-    remove:            'member:remove',
-    changeRole:        'member:role:change',
-    transferOwnership: 'member:ownership:transfer',
+    list: 'member:list',
+    view: 'member:view',
+    invite: 'member:invite',
+    update: 'member:update',
+    remove: 'member:remove',
+    transferOwnership: 'member:transfer_ownership',
   },
   invitation: {
     create: 'invitation:create',
-    accept: 'invitation:accept',
+    view: 'invitation:view',
     revoke: 'invitation:revoke',
   },
   settings: {
@@ -22,14 +24,11 @@ export const Permissions = {
   },
 } as const;
 
+type ValueOf<T> = T[keyof T];
+type DeepValueOf<T> = ValueOf<{ [K in keyof T]: ValueOf<T[K]> }>;
+
 /**
- * Union type of all permission string literals.
- * Use for typed permission checks once PermissionGuard is introduced in RBAC-001.
- *
- * Example:
- *   const perm: Permission = Permissions.member.remove; // 'member:remove'
+ * Union type of all valid permission strings in the system,
+ * plus the WILDCARD_PERMISSION constant ('*').
  */
-export type Permission =
-  (typeof Permissions)[keyof typeof Permissions][
-    keyof (typeof Permissions)[keyof typeof Permissions]
-  ];
+export type Permission = typeof WILDCARD_PERMISSION | DeepValueOf<typeof Permissions>;

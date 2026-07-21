@@ -6,6 +6,9 @@ import { AppModule } from '../../../app.module';
 import { PrismaService } from '../../../common/database/prisma.service';
 import { OrgRole } from '@aiops-hub/db';
 
+import { ResponseEnvelopeInterceptor } from '../../../common/interceptors/response-envelope.interceptor';
+import { GlobalHttpExceptionFilter } from '../../../common/filters/http-exception.filter';
+
 jest.setTimeout(30000);
 
 describe('Organizations Integration Tests (ORG-001)', () => {
@@ -28,6 +31,9 @@ describe('Organizations Integration Tests (ORG-001)', () => {
       type: VersioningType.URI,
       defaultVersion: '1',
     });
+
+    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+    app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
     await app.init();
 
@@ -171,7 +177,8 @@ describe('Organizations Integration Tests (ORG-001)', () => {
     expect(switchRes.body.success).toBe(true);
     expect(switchRes.body.data.id).toBe(targetOrgId);
     expect(switchRes.body.data.role).toBe(OrgRole.OWNER);
-    expect(switchRes.body.data.permissions).toEqual([]);
+    expect(switchRes.body.data.permissions).toBeDefined();
+    expect(switchRes.body.data.permissions.length).toBeGreaterThan(0);
     expect(switchRes.body.data.settings.timezone).toBeDefined();
 
     // 3. Switch Organization -> Immediately call protected endpoint -> Header accepted

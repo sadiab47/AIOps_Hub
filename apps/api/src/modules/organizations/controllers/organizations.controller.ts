@@ -1,17 +1,15 @@
 import { Controller, Post, Get, Patch, Body, UseGuards, Ip, Headers, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth, ApiHeader } from '@nestjs/swagger';
 import { JwtAccessGuard } from '../../../common/auth/jwt-access.guard';
 import { TenantContextGuard } from '../../../common/auth/tenant-context.guard';
 import { MembershipGuard } from '../../../common/auth/membership.guard';
-import { RolesGuard } from '../../../common/auth/roles.guard';
-import { Roles } from '../../../common/auth/roles.decorator';
+import { PermissionGuard } from '../../../common/auth/permission.guard';
+import { RequirePermissions } from '../../../common/auth/require-permissions.decorator';
+import { Permissions } from '../../../common/constants/permissions';
 import { TenantId } from '../../../common/auth/tenant-id.decorator';
 import { CurrentUser } from '../../../common/auth/current-user.decorator';
-import { OrgRole } from '@aiops-hub/db';
 import { CreateOrganizationDto } from '../dto/create-organization.dto';
 import { SwitchOrganizationDto } from '../dto/switch-organization.dto';
-import { OrganizationSummaryDto } from '../dto/organization-summary.dto';
-import { CurrentOrganizationDto } from '../dto/current-organization.dto';
 import { UpdateOrganizationProfileAndSettingsDto } from '../dto/update-settings.dto';
 import { OrganizationsService } from '../services/organizations.service';
 
@@ -22,80 +20,63 @@ export class OrganizationsController {
 
   @Post()
   @UseGuards(JwtAccessGuard)
-  @ApiCookieAuth()
-  @ApiOperation({ summary: 'Create a new organization' })
+  @ApiCookieAuth('aiops_access_token')
+  @ApiOperation({ summary: 'Create a new organization for the current user' })
   @ApiResponse({ status: 201, description: 'Organization created successfully.' })
-  @ApiResponse({ status: 400, description: 'Validation or invalid request parameters.' })
-  @ApiResponse({ status: 401, description: 'Missing, invalid, or expired access token.' })
+  @ApiResponse({ status: 400, description: 'Validation or duplicate organization name.' })
+  @ApiResponse({ status: 401, description: 'Unauthenticated.' })
   async create(
     @Body() dto: CreateOrganizationDto,
     @CurrentUser('sub') userId: string,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
   ) {
-    const org = await this.organizationsService.create(
+    return this.organizationsService.create(
       dto.name,
       userId,
       ip || null,
       userAgent || null,
     );
-
-    return {
-      success: true,
-      data: org,
-    };
   }
 
   @Get()
   @UseGuards(JwtAccessGuard)
-  @ApiCookieAuth()
+  @ApiCookieAuth('aiops_access_token')
   @ApiOperation({ summary: 'List all organizations the user belongs to' })
-  @ApiResponse({ status: 200, description: 'Organizations listed successfully.', type: [OrganizationSummaryDto] })
-  async list(
+  @ApiResponse({ status: 200, description: 'Organizations retrieved successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthenticated.' })
+  async listUserOrganizations(
     @CurrentUser('sub') userId: string,
-    @Headers('x-organization-id') activeOrgId?: string,
   ) {
-    const orgs = await this.organizationsService.listUserOrganizations(userId);
-    const mapped = orgs.map((org) => ({
-      id: org.id,
-      name: org.name,
-      slug: org.slug,
-      role: org.role,
-      isCurrent: org.id === activeOrgId,
-    }));
-
-    return {
-      success: true,
-      data: mapped,
-    };
+    return this.organizationsService.listUserOrganizations(userId);
   }
 
   @Post('switch')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAccessGuard)
-  @ApiCookieAuth()
-  @ApiOperation({ summary: 'Switch active organization context and validate membership' })
-  @ApiResponse({ status: 200, description: 'Switched organization context successfully.', type: CurrentOrganizationDto })
-  @ApiResponse({ status: 403, description: 'Forbidden access to this organization.' })
+  @ApiCookieAuth('aiops_access_token')
+  @ApiOperation({ summary: 'Switch active organization context' })
+  @ApiResponse({ status: 200, description: 'Context switched successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid organizationId format.' })
+  @ApiResponse({ status: 401, description: 'Unauthenticated.' })
+  @ApiResponse({ status: 403, description: 'User is not a member of the specified organization.' })
   async switch(
     @Body() dto: SwitchOrganizationDto,
     @CurrentUser('sub') userId: string,
   ) {
-    const ctx = await this.organizationsService.switchOrganization(userId, dto.organizationId);
-    return {
-      success: true,
-      data: ctx,
-    };
+    return this.organizationsService.switchOrganization(userId, dto.organizationId);
   }
 
   @Patch('settings')
-  @UseGuards(JwtAccessGuard, TenantContextGuard, MembershipGuard, RolesGuard)
-  @Roles(OrgRole.OWNER, OrgRole.ADMIN)
-  @ApiCookieAuth()
+  @UseGuards(JwtAccessGuard, TenantContextGuard, MembershipGuard, PermissionGuard)
+  @RequirePermissions(Permissions.settings.update)
+  @ApiCookieAuth('aiops_access_token')
+  @ApiHeader({ name: 'x-organization-id', description: 'Active Organization ID', required: true })
   @ApiOperation({ summary: 'Update organization profile and configuration settings' })
   @ApiResponse({ status: 200, description: 'Organization settings updated successfully.' })
   @ApiResponse({ status: 400, description: 'Validation or invalid request parameters.' })
-  @ApiResponse({ status: 403, description: 'Forbidden administrative settings access.' })
+  @ApiResponse({ status: 401, description: 'Unauthenticated.' })
+  @ApiResponse({ status: 403, description: 'Forbidden administrative settings access (Requires settings.update permission).' })
   async updateSettings(
     @Body() dto: UpdateOrganizationProfileAndSettingsDto,
     @TenantId() orgId: string,
@@ -103,17 +84,12 @@ export class OrganizationsController {
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
   ) {
-    const result = await this.organizationsService.updateProfileAndSettings(
+    return this.organizationsService.updateProfileAndSettings(
       userId,
       orgId,
       dto,
       ip || null,
       userAgent || null,
     );
-
-    return {
-      success: true,
-      data: result,
-    };
   }
 }

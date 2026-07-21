@@ -6,6 +6,9 @@ import { AppModule } from '../../../app.module';
 import { PrismaService } from '../../../common/database/prisma.service';
 import { OrgRole, InvitationStatus } from '@aiops-hub/db';
 
+import { ResponseEnvelopeInterceptor } from '../../../common/interceptors/response-envelope.interceptor';
+import { GlobalHttpExceptionFilter } from '../../../common/filters/http-exception.filter';
+
 jest.setTimeout(30000);
 
 describe('Invitations Integration Tests (ORG-002)', () => {
@@ -32,6 +35,9 @@ describe('Invitations Integration Tests (ORG-002)', () => {
       type: VersioningType.URI,
       defaultVersion: '1',
     });
+
+    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+    app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
     await app.init();
 

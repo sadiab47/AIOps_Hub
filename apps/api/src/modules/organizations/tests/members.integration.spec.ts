@@ -6,6 +6,9 @@ import { AppModule } from '../../../app.module';
 import { PrismaService } from '../../../common/database/prisma.service';
 import { OrgRole } from '@aiops-hub/db';
 
+import { ResponseEnvelopeInterceptor } from '../../../common/interceptors/response-envelope.interceptor';
+import { GlobalHttpExceptionFilter } from '../../../common/filters/http-exception.filter';
+
 jest.setTimeout(45000);
 
 describe('Members Integration Tests (ORG-005)', () => {
@@ -61,6 +64,8 @@ describe('Members Integration Tests (ORG-005)', () => {
     app.use(cookieParser());
     app.setGlobalPrefix('api');
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+    app.useGlobalFilters(new GlobalHttpExceptionFilter());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -214,6 +219,36 @@ describe('Members Integration Tests (ORG-005)', () => {
         .set('x-organization-id', orgId)
         .send({ role: OrgRole.OWNER })
         .expect(400);
+    });
+
+    it('returns 403 when MANAGER attempts role change (lacks member:update permission)', async () => {
+      // Invite & setup a manager user
+      const managerEmail = `manager-${Date.now()}@example.com`;
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send({ email: managerEmail, password: 'Password123!', name: 'Manager User' });
+      const managerUser = await prisma.user.findUnique({ where: { email: managerEmail } });
+      const mgrLogin = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({ email: managerEmail, password: 'Password123!' });
+      const mgrCookies = mgrLogin.headers['set-cookie'] as unknown as string[];
+
+      const rawToken = await sendInvite(ownerCookies, managerEmail, OrgRole.MANAGER);
+      await acceptInvitation(rawToken, mgrCookies);
+
+      await request(app.getHttpServer())
+        .patch(`/api/v1/organizations/members/${memberMemberId}`)
+        .set('Cookie', mgrCookies)
+        .set('x-organization-id', orgId)
+        .send({ role: OrgRole.VIEWER })
+        .expect(403);
+
+      if (managerUser) {
+        await prisma.auditLog.deleteMany({ where: { userId: managerUser.id } });
+        await prisma.refreshToken.deleteMany({ where: { userId: managerUser.id } });
+        await prisma.member.deleteMany({ where: { userId: managerUser.id } });
+        await prisma.user.deleteMany({ where: { id: managerUser.id } });
+      }
     });
 
     it('returns 403 when non-OWNER/ADMIN attempts role change', async () => {

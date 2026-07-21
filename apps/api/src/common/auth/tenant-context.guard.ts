@@ -1,11 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import { OrgRole } from '@aiops-hub/db';
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../../modules/organizations/repositories/organization-repository.interface';
+import { AuthorizationService } from './authorization.service';
 
 @Injectable()
 export class TenantContextGuard implements CanActivate {
   constructor(
     @Inject(ORGANIZATION_REPOSITORY_TOKEN)
     private organizationRepository: OrganizationRepositoryInterface,
+    private authorizationService: AuthorizationService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -47,6 +50,10 @@ export class TenantContextGuard implements CanActivate {
       organization = org;
     }
 
+    const permissions = membership?.role
+      ? this.authorizationService.getPermissionsForRole(membership.role as OrgRole)
+      : [];
+
     request.context = {
       ...request.context,
       organizationId,
@@ -57,9 +64,10 @@ export class TenantContextGuard implements CanActivate {
         timezone: settings.timezone,
         locale: settings.locale,
       } : null,
-      permissions: [],
+      permissions,
     };
 
     return true;
   }
 }
+

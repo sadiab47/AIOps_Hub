@@ -6,6 +6,7 @@ import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositor
 import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
 import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
 import { EventBusService } from '../../../common/events/event-bus.service';
+import { AuthorizationService } from '../../../common/auth/authorization.service';
 import { OrgRole, InvitationStatus } from '@aiops-hub/db';
 
 describe('InvitationsService', () => {
@@ -47,6 +48,7 @@ describe('InvitationsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvitationsService,
+        AuthorizationService,
         { provide: INVITATION_REPOSITORY_TOKEN, useValue: mockInvitationRepository },
         { provide: MEMBER_REPOSITORY_TOKEN, useValue: mockMemberRepository },
         { provide: ORGANIZATION_REPOSITORY_TOKEN, useValue: mockOrganizationRepository },

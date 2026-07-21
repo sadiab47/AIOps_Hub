@@ -8,6 +8,9 @@ import { Invitation, Member, OrgRole, InvitationStatus } from '@aiops-hub/db';
 import { EventBusService } from '../../../common/events/event-bus.service';
 import { MemberJoinedEvent, InvitationAcceptedEvent, InvitationRevokedEvent } from '../../../common/events/types/member.events';
 
+import { AuthorizationService } from '../../../common/auth/authorization.service';
+import { RequestContext } from '../../../common/auth/request-context.interface';
+
 export function generateToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -27,6 +30,7 @@ export class InvitationsService {
     private readonly organizationRepository: OrganizationRepositoryInterface,
     @Inject(USER_REPOSITORY_TOKEN)
     private readonly userRepository: UserRepositoryInterface,
+    private readonly authorizationService: AuthorizationService,
     private readonly eventBus: EventBusService,
   ) {}
 
@@ -166,9 +170,14 @@ export class InvitationsService {
     userAgent?: string | null,
   ): Promise<Invitation> {
     const invite = await this.invitationRepository.findById(invitationId);
+    const actorCtx: RequestContext = {
+      userId: revokedById,
+      organizationId: orgId,
+    };
 
-    if (!invite || invite.organizationId !== orgId) {
-      throw new NotFoundException('Invitation not found');
+    const policyResult = this.authorizationService.canManageInvitation(actorCtx, invite);
+    if (!policyResult.allowed || !invite) {
+      throw new NotFoundException(policyResult.reason ?? 'Invitation not found');
     }
 
     if (invite.status !== InvitationStatus.PENDING) {

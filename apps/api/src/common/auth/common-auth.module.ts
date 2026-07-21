@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import { CookieService } from './cookie.service';
+import { AuthorizationService } from './authorization.service';
+import { PermissionGuard } from './permission.guard';
 
 @Module({
   imports: [
@@ -15,7 +17,21 @@ import { CookieService } from './cookie.service';
       }),
     }),
   ],
-  providers: [PasswordService, TokenService, CookieService],
-  exports: [PasswordService, TokenService, CookieService, JwtModule],
+  providers: [
+    PasswordService,
+    TokenService,
+    CookieService,
+    AuthorizationService,
+    PermissionGuard,
+  ],
+  exports: [
+    PasswordService,
+    TokenService,
+    CookieService,
+    AuthorizationService,
+    PermissionGuard,
+    JwtModule,
+  ],
 })
 export class CommonAuthModule {}
+

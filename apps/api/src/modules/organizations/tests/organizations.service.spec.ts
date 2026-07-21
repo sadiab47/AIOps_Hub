@@ -5,6 +5,7 @@ import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '
 import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
 import { EventBusService } from '../../../common/events/event-bus.service';
 import { Organization, OrgRole } from '@aiops-hub/db';
+import { getPermissionsForRole } from '../../../common/constants/role-permission-matrix';
 
 describe('OrganizationsService', () => {
   let service: OrganizationsService;
@@ -134,14 +135,13 @@ describe('OrganizationsService', () => {
       organizationRepository.findOrganizationContext.mockResolvedValue(mockContext);
 
       const result = await service.switchOrganization('user-uuid', 'org-uuid');
-
       expect(organizationRepository.findOrganizationContext).toHaveBeenCalledWith('user-uuid', 'org-uuid');
       expect(result).toEqual({
         id: 'org-uuid',
         name: 'Acme',
         slug: 'acme',
         role: 'ADMIN',
-        permissions: [],
+        permissions: getPermissionsForRole(OrgRole.ADMIN),
         settings: {
           timezone: 'EST',
           locale: 'en',
