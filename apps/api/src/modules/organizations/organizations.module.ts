@@ -10,14 +10,17 @@ import { InvitationsService } from './services/invitations.service';
 import { InvitationsController } from './controllers/invitations.controller';
 import { InvitationRepository } from './repositories/invitation.repository';
 import { INVITATION_REPOSITORY_TOKEN } from './repositories/invitation-repository.interface';
+import { MemberManagementService } from './services/member-management.service';
+import { MembersController } from './controllers/members.controller';
 import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [CommonAuthModule, UsersModule],
-  controllers: [OrganizationsController, InvitationsController],
+  controllers: [OrganizationsController, InvitationsController, MembersController],
   providers: [
     OrganizationsService,
     InvitationsService,
+    MemberManagementService,
     {
       provide: ORGANIZATION_REPOSITORY_TOKEN,
       useClass: OrganizationRepository,
@@ -34,6 +37,7 @@ import { UsersModule } from '../users/users.module';
   exports: [
     OrganizationsService,
     InvitationsService,
+    MemberManagementService,
     ORGANIZATION_REPOSITORY_TOKEN,
     MEMBER_REPOSITORY_TOKEN,
     INVITATION_REPOSITORY_TOKEN,

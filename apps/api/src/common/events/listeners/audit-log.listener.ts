@@ -11,6 +11,10 @@ import {
   MemberJoinedEvent,
   InvitationAcceptedEvent,
   InvitationRevokedEvent,
+  MemberRoleChangedEvent,
+  MemberRemovedEvent,
+  OwnershipTransferredEvent,
+  MemberLeftEvent,
 } from '../types/member.events';
 
 @Injectable()
@@ -133,6 +137,82 @@ export class AuditLogListener implements OnModuleInit {
         });
       } catch (err) {
         this.logger.error(`Failed to log ${InvitationRevokedEvent.EVENT_NAME}`, err);
+      }
+    });
+
+    this.eventBus.ofType(MemberRoleChangedEvent).subscribe(async (event) => {
+      try {
+        await this.auditLogRepository.create({
+          userId: event.payload.actorUserId,
+          action: MemberRoleChangedEvent.EVENT_NAME,
+          entityName: 'member',
+          entityId: event.payload.memberId,
+          details: {
+            userId: event.payload.userId,
+            oldRole: event.payload.oldRole,
+            newRole: event.payload.newRole,
+            actorUserId: event.payload.actorUserId,
+          },
+          ipAddress: event.correlation.ipAddress || null,
+          userAgent: event.correlation.userAgent || null,
+        });
+      } catch (err) {
+        this.logger.error(`Failed to log ${MemberRoleChangedEvent.EVENT_NAME}`, err);
+      }
+    });
+
+    this.eventBus.ofType(MemberRemovedEvent).subscribe(async (event) => {
+      try {
+        await this.auditLogRepository.create({
+          userId: event.payload.actorUserId,
+          action: MemberRemovedEvent.EVENT_NAME,
+          entityName: 'member',
+          entityId: event.payload.memberId,
+          details: {
+            userId: event.payload.userId,
+            actorUserId: event.payload.actorUserId,
+          },
+          ipAddress: event.correlation.ipAddress || null,
+          userAgent: event.correlation.userAgent || null,
+        });
+      } catch (err) {
+        this.logger.error(`Failed to log ${MemberRemovedEvent.EVENT_NAME}`, err);
+      }
+    });
+
+    this.eventBus.ofType(OwnershipTransferredEvent).subscribe(async (event) => {
+      try {
+        await this.auditLogRepository.create({
+          userId: event.payload.actorUserId,
+          action: OwnershipTransferredEvent.EVENT_NAME,
+          entityName: 'organization',
+          entityId: event.payload.organizationId,
+          details: {
+            fromUserId: event.payload.fromUserId,
+            toUserId: event.payload.toUserId,
+            toMemberId: event.payload.toMemberId,
+          },
+          ipAddress: event.correlation.ipAddress || null,
+          userAgent: event.correlation.userAgent || null,
+        });
+      } catch (err) {
+        this.logger.error(`Failed to log ${OwnershipTransferredEvent.EVENT_NAME}`, err);
+      }
+    });
+
+    this.eventBus.ofType(MemberLeftEvent).subscribe(async (event) => {
+      try {
+        await this.auditLogRepository.create({
+          userId: event.payload.userId,
+          action: MemberLeftEvent.EVENT_NAME,
+          entityName: 'member',
+          entityId: event.payload.memberId,
+          details: { organizationId: event.payload.organizationId },
+          ipAddress: event.correlation.ipAddress || null,
+          userAgent: event.correlation.userAgent || null,
+        });
+      } catch (err) {
+        this.logger.error(`Failed to log ${MemberLeftEvent.EVENT_NAME}`, err);
       }
     });
   }
