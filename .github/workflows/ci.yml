@@ -38,3 +38,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Run Tests
+        run: pnpm --filter @aiops-hub/api test -- --runInBand
