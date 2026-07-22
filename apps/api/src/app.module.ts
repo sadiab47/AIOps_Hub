@@ -1,6 +1,7 @@
-import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { Module, ValidationPipe, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { validateEnv } from './common/config/env.validation';
 import { DatabaseModule } from './common/database/database.module';
@@ -10,6 +11,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { EventsModule } from './common/events/events.module';
 import { AiModule } from './modules/ai/ai.module';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+
+import { AppThrottlerGuard } from './common/guards/throttler.guard';
 
 @Module({
   imports: [
@@ -34,8 +38,44 @@ import { AiModule } from './modules/ai/ai.module';
     AuthModule,
     OrganizationsModule,
     AiModule,
+    ThrottlerModule.forRoot([
+      {
+        name: 'login',
+        limit: 5,
+        ttl: 60000,
+      },
+      {
+        name: 'register',
+        limit: 5,
+        ttl: 60000,
+      },
+      {
+        name: 'refresh',
+        limit: 20,
+        ttl: 60000,
+      },
+      {
+        name: 'chat',
+        limit: 20,
+        ttl: 60000,
+      },
+      {
+        name: 'providerValidation',
+        limit: 10,
+        ttl: 60000,
+      },
+      {
+        name: 'promptRender',
+        limit: 60,
+        ttl: 60000,
+      },
+    ]),
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AppThrottlerGuard,
+    },
     {
       provide: APP_PIPE,
       useFactory: () =>
@@ -47,4 +87,8 @@ import { AiModule } from './modules/ai/ai.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

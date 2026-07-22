@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { Response, Request } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import * as crypto from 'crypto';
 import { JwtAccessGuard } from '../../../common/auth/jwt-access.guard';
 import { TenantContextGuard } from '../../../common/auth/tenant-context.guard';
@@ -79,6 +80,7 @@ export class ChatController {
   }
 
   @Post(':id/stream')
+  @Throttle({ chat: { limit: 20, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Open real-time token stream (SSE) for prompt message' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })

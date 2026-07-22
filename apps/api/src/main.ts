@@ -4,6 +4,7 @@ import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
 import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -11,7 +12,8 @@ import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filte
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  // Parse HTTP cookies
+  // Security headers & HTTP cookies
+  app.use(helmet());
   app.use(cookieParser());
 
   // Use nestjs-pino logger
@@ -32,7 +34,7 @@ async function bootstrap() {
     .setDescription(
       'Production-ready AI Automation Platform built with Next.js, NestJS, Prisma, PostgreSQL, Redis, LangGraph, and OpenAI. Modular multi-tenant SaaS platform.',
     )
-    .setVersion('0.2.0')
+    .setVersion('0.3.1')
     .addCookieAuth('aiops_access_token', {
       type: 'apiKey',
       in: 'cookie',

@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Res, Ip, Headers, Req, UnauthorizedException, HttpCode, Get, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiCookieAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { UsersService } from '../../users/services/users.service';
 import { RegisterDto } from '../dto/register.dto';
@@ -20,6 +21,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ register: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Register a new user account' })
   @ApiResponse({
     status: 201,
@@ -43,6 +45,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ login: { limit: 5, ttl: 60000 } })
   @HttpCode(200)
   @ApiOperation({ summary: 'Authenticate user and start session' })
   @ApiHeader({
@@ -74,6 +77,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ refresh: { limit: 20, ttl: 60000 } })
   @HttpCode(200)
   @ApiOperation({ summary: 'Rotate active session refresh and access tokens' })
   @ApiCookieAuth('aiops_refresh_token')
