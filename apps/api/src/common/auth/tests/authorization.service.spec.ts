@@ -37,6 +37,7 @@ describe('AuthorizationService (RBAC-001)', () => {
         Permissions.organization.view,
         Permissions.provider.view,
         Permissions.prompt.view,
+        Permissions.agent.view,
       ]);
     });
   });

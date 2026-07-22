@@ -32,16 +32,17 @@ model User {
   invitations    Invitation[]
   prompts        Prompt[]
   promptVersions PromptVersion[]
+  agents         Agent[]
 
   @@map("users")
 }
 
 model Organization {
-  id              String             @id @default(uuid()) @db.Uuid
+  id              String                @id @default(uuid()) @db.Uuid
   name            String
-  slug            String             @unique
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  slug            String                @unique
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
   deletedAt       DateTime?
   members         Member[]
   invitations     Invitation[]
@@ -50,6 +51,7 @@ model Organization {
   prompts         Prompt[]
   conversations   Conversation[]
   usageLogs       AiUsageLog[]
+  agents          Agent[]
 
   @@map("organizations")
 }
@@ -64,22 +66,22 @@ enum AiProvider {
 }
 
 model OrganizationSettings {
-  id                     String       @id @default(uuid()) @db.Uuid
-  organizationId         String       @unique @db.Uuid
-  timezone               String       @default("UTC")
-  locale                 String       @default("en")
+  id                     String      @id @default(uuid()) @db.Uuid
+  organizationId         String      @unique @db.Uuid
+  timezone               String      @default("UTC")
+  locale                 String      @default("en")
   logoUrl                String?
   brandingColor          String?
   defaultAiProvider      AiProvider?
   defaultAiModel         String?
   defaultAiTemperature   Float?
   defaultEmbeddingModel  String?
-  allowPublicInvitations Boolean      @default(false)
+  allowPublicInvitations Boolean     @default(false)
   retentionDays          Int?
-  createdAt              DateTime     @default(now())
-  updatedAt              DateTime     @updatedAt
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_settings")
 }
@@ -89,7 +91,7 @@ model AiProviderConfig {
   organizationId       String         @db.Uuid
   provider             AiProvider
   name                 String
-  encryptedCredentials String         // AES-256-GCM encrypted JSON payload
+  encryptedCredentials String // AES-256-GCM encrypted JSON payload
   defaultModel         String?
   temperature          Float?         @default(0.7)
   maxTokens            Int?           @default(2048)
@@ -100,7 +102,8 @@ model AiProviderConfig {
   updatedAt            DateTime       @updatedAt
   conversations        Conversation[]
 
-  organization         Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentVersions AgentVersion[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -146,10 +149,10 @@ model Prompt {
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
 
-  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  category       PromptCategory   @relation(fields: [categoryId], references: [id])
-  createdBy      User             @relation(fields: [createdById], references: [id])
-  versions       PromptVersion[]
+  organization Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     PromptCategory  @relation(fields: [categoryId], references: [id])
+  createdBy    User            @relation(fields: [createdById], references: [id])
+  versions     PromptVersion[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -159,7 +162,7 @@ model Prompt {
 model PromptVersion {
   id          String    @id @default(uuid()) @db.Uuid
   promptId    String    @db.Uuid
-  version     Int       // integer version counter (e.g. 1, 2, 3)
+  version     Int // integer version counter (e.g. 1, 2, 3)
   template    String
   changeLog   String?
   isActive    Boolean   @default(true)
@@ -167,8 +170,9 @@ model PromptVersion {
   createdAt   DateTime  @default(now())
   messages    Message[]
 
-  prompt      Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
-  createdBy   User      @relation(fields: [createdById], references: [id])
+  prompt        Prompt         @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  agentVersions AgentVersion[]
 
   @@unique([promptId, version])
   @@map("prompt_versions")
@@ -210,43 +214,43 @@ enum MemoryStrategy {
 }
 
 model Conversation {
-  id               String              @id @default(uuid()) @db.Uuid
-  organizationId   String              @db.Uuid
+  id               String             @id @default(uuid()) @db.Uuid
+  organizationId   String             @db.Uuid
   title            String
   provider         AiProvider
-  providerConfigId String              @db.Uuid
+  providerConfigId String             @db.Uuid
   model            String
-  temperature      Float               @default(0.7)
+  temperature      Float              @default(0.7)
   systemPrompt     String?
-  status           ConversationStatus  @default(ACTIVE)
-  memoryStrategy   MemoryStrategy      @default(SLIDING_WINDOW)
-  summaryInterval  Int                 @default(20)
+  status           ConversationStatus @default(ACTIVE)
+  memoryStrategy   MemoryStrategy     @default(SLIDING_WINDOW)
+  summaryInterval  Int                @default(20)
   maxContextTokens Int?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   deletedAt        DateTime?
 
-  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  providerConfig   AiProviderConfig    @relation(fields: [providerConfigId], references: [id])
-  messages         Message[]
-  usageLogs        AiUsageLog[]
-  summaries        ConversationSummary[]
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  providerConfig AiProviderConfig      @relation(fields: [providerConfigId], references: [id])
+  messages       Message[]
+  usageLogs      AiUsageLog[]
+  summaries      ConversationSummary[]
 
   @@index([organizationId])
   @@map("conversations")
 }
 
 model ConversationSummary {
-  id             String       @id @default(uuid()) @db.Uuid
-  conversationId String       @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @db.Uuid
   version        Int
   summary        String
-  startMessageId String?      @db.Uuid
-  endMessageId   String?      @db.Uuid
-  tokenCount     Int          @default(0)
-  createdAt      DateTime     @default(now())
+  startMessageId String?  @db.Uuid
+  endMessageId   String?  @db.Uuid
+  tokenCount     Int      @default(0)
+  createdAt      DateTime @default(now())
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, version])
   @@map("conversation_summaries")
@@ -264,8 +268,8 @@ model Message {
   metadata          Json?
   createdAt         DateTime      @default(now())
 
-  conversation      Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  promptVersion     PromptVersion? @relation(fields: [promptVersionId], references: [id])
+  conversation  Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  promptVersion PromptVersion? @relation(fields: [promptVersionId], references: [id])
 
   @@map("messages")
 }
@@ -287,8 +291,8 @@ model AiUsageLog {
   latencyMs        Int
   createdAt        DateTime        @default(now())
 
-  organization     Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  conversation     Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])
   @@index([providerConfigId])
@@ -329,11 +333,11 @@ model AuditLog {
 }
 
 model RefreshToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  tokenHash String    @unique
-  userAgent String?
-  ipAddress String?
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  tokenHash     String    @unique
+  userAgent     String?
+  ipAddress     String?
   expiresAt     DateTime
   revokedAt     DateTime?
   revokedReason String?
@@ -366,9 +370,62 @@ model Invitation {
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
 
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitedBy      User             @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation(fields: [invitedById], references: [id], onDelete: Cascade)
 
   @@unique([email, organizationId])
   @@map("invitations")
+}
+
+model Agent {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  enabled        Boolean   @default(true)
+  createdById    String    @db.Uuid
+  currentVersion Int       @default(1)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdByUser User           @relation(fields: [createdById], references: [id])
+  versions      AgentVersion[]
+  tools         AgentTool[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, slug])
+  @@map("agents")
+}
+
+model AgentVersion {
+  id               String   @id @default(uuid()) @db.Uuid
+  agentId          String   @db.Uuid
+  version          Int
+  providerConfigId String   @db.Uuid
+  model            String
+  promptVersionId  String?  @db.Uuid
+  temperature      Float    @default(0.7)
+  maxTokens        Int?
+  createdAt        DateTime @default(now())
+
+  agent          Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  providerConfig AiProviderConfig @relation(fields: [providerConfigId], references: [id])
+  promptVersion  PromptVersion?   @relation(fields: [promptVersionId], references: [id])
+
+  @@unique([agentId, version])
+  @@map("agent_versions")
+}
+
+model AgentTool {
+  agentId       String @db.Uuid
+  toolId        String
+  configuration Json?
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, toolId])
+  @@map("agent_tools")
 }

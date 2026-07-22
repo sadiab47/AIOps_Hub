@@ -39,6 +39,13 @@ export const Permissions = {
     versionView: 'prompt:version:view',
     render: 'prompt:render',
   },
+  agent: {
+    view: 'agent:view',
+    create: 'agent:create',
+    update: 'agent:update',
+    delete: 'agent:delete',
+    execute: 'agent:execute',
+  },
 } as const;
 
 type ValueOf<T> = T[keyof T];

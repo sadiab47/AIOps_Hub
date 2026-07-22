@@ -32,10 +32,14 @@ import { CostCalculator } from './services/cost-calculator';
 import { UsageAnalyticsService } from './services/usage-analytics.service';
 import { UsageEventListener } from './services/usage-event.listener';
 import { UsageController } from './controllers/usage.controller';
+import { AGENT_REPOSITORY_TOKEN } from './repositories/agent-repository.interface';
+import { PrismaAgentRepository } from './repositories/prisma-agent.repository';
+import { AgentService } from './services/agent.service';
+import { AgentController } from './controllers/agent.controller';
 
 @Module({
   imports: [DatabaseModule, EventsModule, CommonAuthModule, OrganizationsModule, AiCommonModule],
-  controllers: [AiProvidersController, PromptsController, ChatController, UsageController],
+  controllers: [AiProvidersController, PromptsController, ChatController, UsageController, AgentController],
   providers: [
     {
       provide: AI_PROVIDER_REPOSITORY_TOKEN,
@@ -57,6 +61,10 @@ import { UsageController } from './controllers/usage.controller';
       provide: USAGE_REPOSITORY_TOKEN,
       useClass: PrismaUsageRepository,
     },
+    {
+      provide: AGENT_REPOSITORY_TOKEN,
+      useClass: PrismaAgentRepository,
+    },
     SlidingWindowMemoryProvider,
     AiProviderService,
     PromptVariableEngineService,
@@ -72,6 +80,7 @@ import { UsageController } from './controllers/usage.controller';
     CostCalculator,
     UsageAnalyticsService,
     UsageEventListener,
+    AgentService,
   ],
   exports: [
     AiProviderService,
@@ -90,6 +99,8 @@ import { UsageController } from './controllers/usage.controller';
     PricingCatalog,
     CostCalculator,
     UsageAnalyticsService,
+    AGENT_REPOSITORY_TOKEN,
+    AgentService,
   ],
 })
 export class AiModule {}

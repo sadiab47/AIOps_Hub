@@ -42,6 +42,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<OrgRole, ReadonlyArray<Permission>
     Permissions.prompt.versionCreate,
     Permissions.prompt.versionView,
     Permissions.prompt.render,
+    Permissions.agent.view,
+    Permissions.agent.create,
+    Permissions.agent.update,
+    Permissions.agent.delete,
+    Permissions.agent.execute,
   ],
   [OrgRole.MANAGER]: [
     Permissions.organization.view,
@@ -56,6 +61,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<OrgRole, ReadonlyArray<Permission>
     Permissions.prompt.versionCreate,
     Permissions.prompt.versionView,
     Permissions.prompt.render,
+    Permissions.agent.view,
+    Permissions.agent.create,
+    Permissions.agent.update,
+    Permissions.agent.execute,
   ],
   [OrgRole.MEMBER]: [
     Permissions.organization.view,
@@ -64,11 +73,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<OrgRole, ReadonlyArray<Permission>
     Permissions.provider.view,
     Permissions.prompt.view,
     Permissions.prompt.render,
+    Permissions.agent.view,
+    Permissions.agent.execute,
   ],
   [OrgRole.VIEWER]: [
     Permissions.organization.view,
     Permissions.provider.view,
     Permissions.prompt.view,
+    Permissions.agent.view,
   ],
 };
 
