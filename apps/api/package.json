@@ -5,6 +5,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "nest start --watch",
+    "start:dev": "npm run build && nest start --watch",
+    "start:prod": "node dist/main",
     "start": "nest start",
     "test": "jest"
   },
