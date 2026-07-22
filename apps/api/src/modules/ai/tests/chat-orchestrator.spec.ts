@@ -3,7 +3,9 @@ import { NotFoundException } from '@nestjs/common';
 import { MessageRole, FinishReason, AiRequestStatus, AiProvider as AiProviderEnum } from '@aiops-hub/db';
 import { ChatOrchestrator } from '../services/chat-orchestrator.service';
 import { CONVERSATION_REPOSITORY_TOKEN } from '../repositories/conversation-repository.interface';
-import { MEMORY_PROVIDER_TOKEN } from '../services/memory-provider.interface';
+import { ConversationMemoryService } from '../services/conversation-memory.service';
+import { MemoryBudgetCalculator } from '../services/memory-budget.calculator';
+import { CostCalculator } from '../services/cost-calculator';
 import { CredentialService } from '../../../common/ai/services/credential.service';
 import { AiProviderFactory } from '../../../common/ai/factories/ai-provider.factory';
 import { PromptVariableEngineService } from '../services/prompt-variable-engine.service';
@@ -13,7 +15,8 @@ import { EventBusService } from '../../../common/events/event-bus.service';
 describe('ChatOrchestrator', () => {
   let orchestrator: ChatOrchestrator;
   let repository: any;
-  let memoryProvider: any;
+  let conversationMemoryService: any;
+  let budgetCalculator: any;
   let credentialService: any;
   let providerFactory: any;
   let prisma: any;
@@ -51,9 +54,18 @@ describe('ChatOrchestrator', () => {
       executeTransaction: jest.fn((cb) => cb(repository)),
     };
 
-    memoryProvider = {
-      trimMessages: jest.fn((model, msgs) => msgs),
-      estimateTokenCount: jest.fn(() => 10),
+    conversationMemoryService = {
+      buildContext: jest.fn().mockResolvedValue([
+        { role: 'user', content: 'hi {{name}}' },
+      ]),
+    };
+
+    budgetCalculator = {
+      calculate: jest.fn().mockReturnValue({
+        model: 'gpt-4o',
+        maxContextTokens: 100000,
+        maxHistoryTokens: 60000,
+      }),
     };
 
     credentialService = {
@@ -74,12 +86,18 @@ describe('ChatOrchestrator', () => {
       publish: jest.fn(),
     };
 
+    const costCalculator = {
+      calculateCost: jest.fn().mockReturnValue(0.01),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatOrchestrator,
         PromptVariableEngineService,
         { provide: CONVERSATION_REPOSITORY_TOKEN, useValue: repository },
-        { provide: MEMORY_PROVIDER_TOKEN, useValue: memoryProvider },
+        { provide: ConversationMemoryService, useValue: conversationMemoryService },
+        { provide: MemoryBudgetCalculator, useValue: budgetCalculator },
+        { provide: CostCalculator, useValue: costCalculator },
         { provide: CredentialService, useValue: credentialService },
         { provide: AiProviderFactory, useValue: providerFactory },
         { provide: PrismaService, useValue: prisma },
@@ -126,8 +144,11 @@ describe('ChatOrchestrator', () => {
       expect(repository.createMessage).toHaveBeenCalledWith(
         expect.objectContaining({ role: MessageRole.ASSISTANT, content: 'Hello world!', finishReason: FinishReason.STOP }),
       );
-      expect(repository.createUsageLog).toHaveBeenCalledWith(
-        expect.objectContaining({ status: AiRequestStatus.SUCCESS, requestId: 'req-1' }),
+      expect(eventBus.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventName: 'chat.ai_usage_logged',
+          payload: expect.objectContaining({ status: AiRequestStatus.SUCCESS, requestId: 'req-1' }),
+        }),
       );
     });
   });

@@ -1,58 +1,64 @@
 import { Injectable } from '@nestjs/common';
-import { MemoryProvider, MemoryMessageInput } from './memory-provider.interface';
-import { MessageRole } from '@aiops-hub/db';
+import { Conversation, Message, MessageRole } from '@aiops-hub/db';
+import { ChatMessageInput } from '../../../common/ai/types/ai-provider.interface';
+import { MemoryProvider } from './memory-provider.interface';
+import { MemoryBudget } from './memory-budget.interface';
+import { ContextBuilder } from './context-builder';
 
 @Injectable()
 export class SlidingWindowMemoryProvider implements MemoryProvider {
-  /**
-   * Estimates token usage. Rule of thumb: ~4 characters per token.
-   */
-  estimateTokenCount(messages: MemoryMessageInput[]): number {
+  constructor(private readonly contextBuilder: ContextBuilder) {}
+
+  async buildContext(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+    budget: MemoryBudget,
+  ): Promise<ChatMessageInput[]> {
+    // 1. Get raw history messages
+    const rawMessages = conversation.messages;
+
+    // 2. Trim older message history to fit in budget.maxHistoryTokens
+    const trimmedHistory = this.trimToBudget(rawMessages, budget.maxHistoryTokens);
+
+    // 3. Assemble and return context (sliding window uses no summaries)
+    return this.contextBuilder.assemble(
+      conversation.systemPrompt,
+      null, // sliding window does not prepend summaries
+      trimmedHistory,
+    );
+  }
+
+  async shouldSummarize(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+    budget: MemoryBudget,
+  ): Promise<boolean> {
+    return false;
+  }
+
+  async summarize(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+  ): Promise<void> {
+    // No-op for sliding window
+  }
+
+  private trimToBudget(messages: Message[], limit: number): Message[] {
+    let currentTokens = this.estimateTokenCount(messages);
+    if (currentTokens <= limit) {
+      return [...messages];
+    }
+
+    const workingHistory = [...messages];
+    // Remove oldest messages first
+    while (workingHistory.length > 0 && this.estimateTokenCount(workingHistory) > limit) {
+      workingHistory.shift();
+    }
+    return workingHistory;
+  }
+
+  private estimateTokenCount(messages: Message[]): number {
     let totalChars = 0;
     for (const msg of messages) {
       totalChars += msg.content?.length ?? 0;
     }
     return Math.ceil(totalChars / 4);
-  }
-
-  /**
-   * Trims message history to fit context limits. Preserves System message at index 0.
-   */
-  trimMessages(
-    model: string,
-    messages: MemoryMessageInput[],
-    maxTokensLimit?: number,
-  ): MemoryMessageInput[] {
-    const limit = maxTokensLimit ?? this.getMaxTokenLimitForModel(model);
-
-    let estimated = this.estimateTokenCount(messages);
-    if (estimated <= limit) {
-      return [...messages];
-    }
-
-    const systemPrompt = messages[0]?.role === MessageRole.SYSTEM ? messages[0] : null;
-    const workingHistory = systemPrompt ? messages.slice(1) : [...messages];
-
-    while (workingHistory.length > 1 && this.estimateTokenCount(workingHistory) + (systemPrompt ? this.estimateTokenCount([systemPrompt]) : 0) > limit) {
-      // Remove oldest message
-      workingHistory.shift();
-    }
-
-    return systemPrompt ? [systemPrompt, ...workingHistory] : workingHistory;
-  }
-
-  private getMaxTokenLimitForModel(model: string): number {
-    const key = model.toLowerCase();
-    if (key.includes('gpt-4o-mini')) {
-      return 64000;
-    }
-    if (key.includes('gpt-4o')) {
-      return 100000;
-    }
-    if (key.includes('claude-3-5')) {
-      return 150000;
-    }
-    // Fallback limit for local or smaller models (like Ollama llama3)
-    return 8000;
   }
 }

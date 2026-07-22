@@ -1,24 +1,26 @@
-import { MessageRole } from '@aiops-hub/db';
+import { Conversation, Message } from '@aiops-hub/db';
+import { ChatMessageInput } from '../../../common/ai/types/ai-provider.interface';
+import { MemoryBudget } from './memory-budget.interface';
+
+export const MEMORY_PROVIDER_TOKEN = Symbol('MEMORY_PROVIDER_TOKEN');
 
 export interface MemoryMessageInput {
-  role: MessageRole;
+  role: any;
   content: string;
 }
 
 export interface MemoryProvider {
-  /**
-   * Trims the provided array of messages to stay safely within the model context limit.
-   * Ensures that index 0 (if it is a SYSTEM prompt) is always preserved at the very top of the list.
-   */
-  trimMessages(
-    model: string,
-    messages: MemoryMessageInput[],
-    maxTokensLimit?: number,
-  ): MemoryMessageInput[];
+  buildContext(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+    budget: MemoryBudget,
+  ): Promise<ChatMessageInput[]>;
 
-  /**
-   * Estimates token count for a list of messages.
-   */
-  estimateTokenCount(messages: MemoryMessageInput[]): number;
+  shouldSummarize(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+    budget: MemoryBudget,
+  ): Promise<boolean>;
+
+  summarize(
+    conversation: Conversation & { messages: Message[]; summaries: any[] },
+  ): Promise<void>;
 }
-export const MEMORY_PROVIDER_TOKEN = Symbol('MEMORY_PROVIDER_TOKEN');

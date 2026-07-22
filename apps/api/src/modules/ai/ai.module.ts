@@ -17,13 +17,25 @@ import { CONVERSATION_REPOSITORY_TOKEN } from './repositories/conversation-repos
 import { PrismaConversationRepository } from './repositories/prisma-conversation.repository';
 import { MEMORY_PROVIDER_TOKEN } from './services/memory-provider.interface';
 import { SlidingWindowMemoryProvider } from './services/sliding-window-memory.provider';
+import { SummaryMemoryProvider } from './services/summary-memory.provider';
+import { ConversationMemoryService } from './services/conversation-memory.service';
+import { MemoryBudgetCalculator } from './services/memory-budget.calculator';
+import { ContextBuilder } from './services/context-builder';
+import { MemoryEventListener } from './services/memory-event.listener';
 import { ConversationService } from './services/conversation.service';
 import { ChatOrchestrator } from './services/chat-orchestrator.service';
 import { ChatController } from './controllers/chat.controller';
+import { USAGE_REPOSITORY_TOKEN } from './repositories/usage-repository.interface';
+import { PrismaUsageRepository } from './repositories/prisma-usage.repository';
+import { PricingCatalog } from './services/pricing-catalog';
+import { CostCalculator } from './services/cost-calculator';
+import { UsageAnalyticsService } from './services/usage-analytics.service';
+import { UsageEventListener } from './services/usage-event.listener';
+import { UsageController } from './controllers/usage.controller';
 
 @Module({
   imports: [DatabaseModule, EventsModule, CommonAuthModule, OrganizationsModule, AiCommonModule],
-  controllers: [AiProvidersController, PromptsController, ChatController],
+  controllers: [AiProvidersController, PromptsController, ChatController, UsageController],
   providers: [
     {
       provide: AI_PROVIDER_REPOSITORY_TOKEN,
@@ -41,11 +53,25 @@ import { ChatController } from './controllers/chat.controller';
       provide: MEMORY_PROVIDER_TOKEN,
       useClass: SlidingWindowMemoryProvider,
     },
+    {
+      provide: USAGE_REPOSITORY_TOKEN,
+      useClass: PrismaUsageRepository,
+    },
+    SlidingWindowMemoryProvider,
     AiProviderService,
     PromptVariableEngineService,
     PromptService,
     ConversationService,
     ChatOrchestrator,
+    SummaryMemoryProvider,
+    ConversationMemoryService,
+    MemoryBudgetCalculator,
+    ContextBuilder,
+    MemoryEventListener,
+    PricingCatalog,
+    CostCalculator,
+    UsageAnalyticsService,
+    UsageEventListener,
   ],
   exports: [
     AiProviderService,
@@ -57,6 +83,13 @@ import { ChatController } from './controllers/chat.controller';
     ChatOrchestrator,
     CONVERSATION_REPOSITORY_TOKEN,
     MEMORY_PROVIDER_TOKEN,
+    ConversationMemoryService,
+    MemoryBudgetCalculator,
+    ContextBuilder,
+    USAGE_REPOSITORY_TOKEN,
+    PricingCatalog,
+    CostCalculator,
+    UsageAnalyticsService,
   ],
 })
 export class AiModule {}

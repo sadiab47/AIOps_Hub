@@ -4,7 +4,9 @@ import {
   CONVERSATION_REPOSITORY_TOKEN,
   ConversationRepositoryInterface,
 } from '../repositories/conversation-repository.interface';
-import { MEMORY_PROVIDER_TOKEN, MemoryProvider } from './memory-provider.interface';
+import { ConversationMemoryService } from './conversation-memory.service';
+import { MemoryBudgetCalculator } from './memory-budget.calculator';
+import { CostCalculator } from './cost-calculator';
 import { CredentialService } from '../../../common/ai/services/credential.service';
 import { AiProviderFactory } from '../../../common/ai/factories/ai-provider.factory';
 import { PromptVariableEngineService } from './prompt-variable-engine.service';
@@ -15,6 +17,7 @@ import { ChatCompletionRequest, ChatMessageInput } from '../../../common/ai/type
 import {
   MessageSentEvent,
   MessageStreamedEvent,
+  AiUsageLoggedEvent,
 } from '../events/chat.events';
 import { EventCorrelationContext } from '../../../common/events/domain-event';
 
@@ -23,8 +26,9 @@ export class ChatOrchestrator {
   constructor(
     @Inject(CONVERSATION_REPOSITORY_TOKEN)
     private readonly repository: ConversationRepositoryInterface,
-    @Inject(MEMORY_PROVIDER_TOKEN)
-    private readonly memoryProvider: MemoryProvider,
+    private readonly memoryService: ConversationMemoryService,
+    private readonly budgetCalculator: MemoryBudgetCalculator,
+    private readonly costCalculator: CostCalculator,
     private readonly credentialService: CredentialService,
     private readonly providerFactory: AiProviderFactory,
     private readonly variableEngine: PromptVariableEngineService,
@@ -104,31 +108,13 @@ export class ChatOrchestrator {
       ),
     );
 
-    // 3. Load entire conversation history for context building
-    const rawHistory = await this.repository.listMessages(conversationId);
-    const memoryInputs = rawHistory.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // 3. Delegate context building to the Memory Engine pipeline
+    const chatMessages = await this.memoryService.buildContext(conversationId, orgId);
 
-    // 4. Memory Trimming Strategy
-    const trimmedInputs = this.memoryProvider.trimMessages(conversation.model, memoryInputs);
-
-    // Map MessageRole enum to provider string literals ('system' | 'user' | 'assistant')
-    const messagesInput: ChatMessageInput[] = trimmedInputs.map((m) => {
-      let roleVal: 'system' | 'user' | 'assistant' = 'user';
-      if (m.role === MessageRole.SYSTEM) roleVal = 'system';
-      else if (m.role === MessageRole.ASSISTANT) roleVal = 'assistant';
-      return {
-        role: roleVal,
-        content: m.content,
-      };
-    });
-
-    // 5. Construct ChatCompletionRequest
+    // 4. Construct ChatCompletionRequest
     const streamReq: ChatCompletionRequest = {
       model: conversation.model,
-      messages: messagesInput,
+      messages: chatMessages,
       temperature: conversation.temperature,
     };
 
@@ -146,14 +132,17 @@ export class ChatOrchestrator {
 
       // Stream completed successfully - construct estimated usage
       const latencyMs = Date.now() - startTimestamp;
-      const promptTokens = this.memoryProvider.estimateTokenCount(trimmedInputs);
+      const promptTokens = Math.ceil(
+        chatMessages.reduce((acc, m) => acc + (m.content?.length ?? 0), 0) / 4,
+      );
       const completionTokens = Math.ceil(generatedText.length / 4);
+      const estimatedCost = this.costCalculator.calculateCost(conversation.model, promptTokens, completionTokens);
 
       tokenUsage = {
         promptTokens,
         completionTokens,
         totalTokens: promptTokens + completionTokens,
-        estimatedCostUsd: this.calculateEstimatedCost(conversation.model, promptTokens, completionTokens),
+        estimatedCostUsd: estimatedCost,
         latencyMs,
       };
 
@@ -169,21 +158,26 @@ export class ChatOrchestrator {
         latencyMs,
       });
 
-      // Write Usage Log
-      await this.repository.createUsageLog({
-        requestId,
-        organization: { connect: { id: orgId } },
-        conversation: { connect: { id: conversationId } },
-        providerConfigId: providerConfig.id,
-        provider: providerConfig.provider,
-        model: conversation.model,
-        promptTokens: tokenUsage.promptTokens,
-        completionTokens: tokenUsage.completionTokens,
-        totalTokens: tokenUsage.totalTokens,
-        estimatedCostUsd: tokenUsage.estimatedCostUsd,
-        status: AiRequestStatus.SUCCESS,
-        latencyMs,
-      });
+      // Decouple Log Persistence via Domain Event
+      this.eventBus.publish(
+        new AiUsageLoggedEvent(
+          {
+            requestId,
+            organizationId: orgId,
+            conversationId,
+            providerConfigId: providerConfig.id,
+            provider: providerConfig.provider,
+            model: conversation.model,
+            promptTokens: tokenUsage.promptTokens,
+            completionTokens: tokenUsage.completionTokens,
+            totalTokens: tokenUsage.totalTokens,
+            estimatedCostUsd: tokenUsage.estimatedCostUsd,
+            status: AiRequestStatus.SUCCESS,
+            latencyMs,
+          },
+          correlation,
+        ),
+      );
 
       this.eventBus.publish(
         new MessageStreamedEvent(
@@ -202,8 +196,11 @@ export class ChatOrchestrator {
       const latencyMs = Date.now() - startTimestamp;
       const isCancellation = error.name === 'AbortError' || error.message?.includes('aborted');
 
-      const promptTokens = this.memoryProvider.estimateTokenCount(trimmedInputs);
+      const promptTokens = Math.ceil(
+        chatMessages.reduce((acc, m) => acc + (m.content?.length ?? 0), 0) / 4,
+      );
       const completionTokens = Math.ceil(generatedText.length / 4);
+      const estimatedCost = this.costCalculator.calculateCost(conversation.model, promptTokens, completionTokens);
 
       if (isCancellation) {
         if (generatedText.length > 0) {
@@ -217,53 +214,52 @@ export class ChatOrchestrator {
           });
         }
 
-        await this.repository.createUsageLog({
-          requestId,
-          organization: { connect: { id: orgId } },
-          conversation: { connect: { id: conversationId } },
-          providerConfigId: providerConfig.id,
-          provider: providerConfig.provider,
-          model: conversation.model,
-          promptTokens,
-          completionTokens,
-          totalTokens: promptTokens + completionTokens,
-          estimatedCostUsd: this.calculateEstimatedCost(conversation.model, promptTokens, completionTokens),
-          status: AiRequestStatus.CANCELLED,
-          latencyMs,
-        });
+        this.eventBus.publish(
+          new AiUsageLoggedEvent(
+            {
+              requestId,
+              organizationId: orgId,
+              conversationId,
+              providerConfigId: providerConfig.id,
+              provider: providerConfig.provider,
+              model: conversation.model,
+              promptTokens,
+              completionTokens,
+              totalTokens: promptTokens + completionTokens,
+              estimatedCostUsd: estimatedCost,
+              status: AiRequestStatus.CANCELLED,
+              latencyMs,
+            },
+            correlation,
+          ),
+        );
 
         yield { event: 'error', data: { code: 'CANCELLED', message: 'Request cancelled by user' } };
       } else {
         // Real stream error (timeouts / provider issues)
-        await this.repository.createUsageLog({
-          requestId,
-          organization: { connect: { id: orgId } },
-          conversation: { connect: { id: conversationId } },
-          providerConfigId: providerConfig.id,
-          provider: providerConfig.provider,
-          model: conversation.model,
-          promptTokens,
-          completionTokens,
-          totalTokens: promptTokens + completionTokens,
-          estimatedCostUsd: this.calculateEstimatedCost(conversation.model, promptTokens, completionTokens),
-          status: AiRequestStatus.FAILED,
-          errorCode: error.message || 'UNKNOWN_ERROR',
-          latencyMs,
-        });
+        this.eventBus.publish(
+          new AiUsageLoggedEvent(
+            {
+              requestId,
+              organizationId: orgId,
+              conversationId,
+              providerConfigId: providerConfig.id,
+              provider: providerConfig.provider,
+              model: conversation.model,
+              promptTokens,
+              completionTokens,
+              totalTokens: promptTokens + completionTokens,
+              estimatedCostUsd: estimatedCost,
+              status: AiRequestStatus.FAILED,
+              errorCode: error.message || 'UNKNOWN_ERROR',
+              latencyMs,
+            },
+            correlation,
+          ),
+        );
 
         yield { event: 'error', data: { code: 'PROVIDER_ERROR', message: error.message || 'Streaming failed' } };
       }
     }
-  }
-
-  private calculateEstimatedCost(model: string, promptTokens: number, completionTokens: number): number {
-    const key = model.toLowerCase();
-    if (key.includes('gpt-4o-mini')) {
-      return (promptTokens * 0.00000015) + (completionTokens * 0.0000006);
-    }
-    if (key.includes('gpt-4o')) {
-      return (promptTokens * 0.000005) + (completionTokens * 0.000015);
-    }
-    return 0.0;
   }
 }

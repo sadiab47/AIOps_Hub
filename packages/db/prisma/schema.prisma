@@ -203,27 +203,53 @@ enum AiRequestStatus {
   TIMEOUT
 }
 
+enum MemoryStrategy {
+  SLIDING_WINDOW
+  SUMMARY
+  HYBRID
+}
+
 model Conversation {
-  id               String             @id @default(uuid()) @db.Uuid
-  organizationId   String             @db.Uuid
+  id               String              @id @default(uuid()) @db.Uuid
+  organizationId   String              @db.Uuid
   title            String
   provider         AiProvider
-  providerConfigId String             @db.Uuid
+  providerConfigId String              @db.Uuid
   model            String
-  temperature      Float              @default(0.7)
+  temperature      Float               @default(0.7)
   systemPrompt     String?
-  status           ConversationStatus @default(ACTIVE)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  status           ConversationStatus  @default(ACTIVE)
+  memoryStrategy   MemoryStrategy      @default(SLIDING_WINDOW)
+  summaryInterval  Int                 @default(20)
+  maxContextTokens Int?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   deletedAt        DateTime?
 
-  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  providerConfig   AiProviderConfig   @relation(fields: [providerConfigId], references: [id])
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  providerConfig   AiProviderConfig    @relation(fields: [providerConfigId], references: [id])
   messages         Message[]
   usageLogs        AiUsageLog[]
+  summaries        ConversationSummary[]
 
   @@index([organizationId])
   @@map("conversations")
+}
+
+model ConversationSummary {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  version        Int
+  summary        String
+  startMessageId String?      @db.Uuid
+  endMessageId   String?      @db.Uuid
+  tokenCount     Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, version])
+  @@map("conversation_summaries")
 }
 
 model Message {
@@ -264,6 +290,11 @@ model AiUsageLog {
   organization     Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   conversation     Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
+  @@index([organizationId, createdAt])
+  @@index([providerConfigId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([model])
   @@map("ai_usage_logs")
 }
 

@@ -4,6 +4,7 @@ import request from 'supertest';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../../../app.module';
 import { PrismaService } from '../../../common/database/prisma.service';
+import { ResponseEnvelopeInterceptor } from '../../../common/interceptors/response-envelope.interceptor';
 
 describe('Authentication Integration Tests (AUTH-004)', () => {
   let app: INestApplication;
@@ -17,6 +18,7 @@ describe('Authentication Integration Tests (AUTH-004)', () => {
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
     
     app.setGlobalPrefix('api');
     app.enableVersioning({
@@ -80,7 +82,7 @@ describe('Authentication Integration Tests (AUTH-004)', () => {
       .expect(200);
 
     expect(logoutRes.body.success).toBe(true);
-    expect(logoutRes.body.message).toBe('Logged out successfully.');
+    expect(logoutRes.body.data.message).toBe('Logged out successfully.');
 
     // Assert Set-Cookie contains empty/deleted values
     const logoutCookies = logoutRes.headers['set-cookie'] as unknown as string[];
@@ -133,7 +135,7 @@ describe('Authentication Integration Tests (AUTH-004)', () => {
       .expect(200);
 
     expect(logoutAllRes.body.success).toBe(true);
-    expect(logoutAllRes.body.message).toBe('All sessions logged out successfully.');
+    expect(logoutAllRes.body.data.message).toBe('All sessions logged out successfully.');
 
     // 4. Verify BOTH Device A and Device B refreshes are blocked
     await request(app.getHttpServer())

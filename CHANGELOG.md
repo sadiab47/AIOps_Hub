@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-07-22
+
+### Added
+- **AI Infrastructure (AI-000)**: Formulated workspace-wide configuration mappings for NestJS backend modules and external dependencies.
+- **Provider Management (AI-001)**: Developed `AiProviderFactory` supporting multi-provider configurations (OpenAI, Anthropic, Gemini, local models) with secure credentials encryption.
+- **Prompt Library (AI-002)**: Integrated prompt templates with variable rendering engines and database history versioning.
+- **Chat SSE Streaming (AI-003)**: Implemented real-time token streaming using Server-Sent Events (SSE) including client-side abort mechanics.
+- **Conversation Memory Engine (AI-004)**: Dynamic token budget calculations and sliding context windows with background summarization event loops.
+- **Usage & Cost Analytics (AI-005)**: Decoupled pricing catalogs, event-driven log writes, and complete REST aggregation endpoints (token metrics, cost, latencies, and statuses).
+
+---
+
 ## [0.2.0] - 2026-07-21
 
 ### Added

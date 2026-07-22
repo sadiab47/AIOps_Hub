@@ -8,8 +8,8 @@ Designed for production from day one.
 
 ---
 
-[![Version](https://img.shields.io/badge/Version-v0.1.0-blue.svg)](#)
-[![Status](https://img.shields.io/badge/Status-Authentication%20Complete-green.svg)](#)
+[![Version](https://img.shields.io/badge/Version-v0.3.0-blue.svg)](#)
+[![Status](https://img.shields.io/badge/Status-AIOps%20Core%20Complete-green.svg)](#)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
@@ -178,9 +178,9 @@ pnpm dev
 ### Sprint Progress
 
 - **✅ Sprint 0** – Infrastructure & Foundation
-- **🚧 Sprint 1** – Authentication & Organizations (In Progress)
-- **⏳ Sprint 2** – File Management
-- **⏳ Sprint 3** – AI Knowledge Base
+- **✅ Sprint 1** – Authentication & Organizations
+- **✅ Sprint 2** – AIOps Core (AI Infrastructure, Streaming, Memory & Telemetry)
+- **🚧 Sprint 3** – File Management & Vector Store (In Progress)
 - **⏳ Sprint 4** – AI Agents
 - **⏳ Sprint 5** – Workflow Automation
 - **⏳ Sprint 6** – Production Deployment
