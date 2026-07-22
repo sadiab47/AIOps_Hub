@@ -16,34 +16,40 @@ enum OrgRole {
 }
 
 model User {
-  id           String      @id @default(uuid()) @db.Uuid
-  email        String      @unique
-  passwordHash String
-  name         String?
-  isActive     Boolean     @default(true)
-  lockedAt     DateTime?
-  lastLoginAt  DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  deletedAt    DateTime?
-  memberships  Member[]
-  auditLogs    AuditLog[]
-  refreshTokens RefreshToken[]
-  invitations  Invitation[]
+  id             String          @id @default(uuid()) @db.Uuid
+  email          String          @unique
+  passwordHash   String
+  name           String?
+  isActive       Boolean         @default(true)
+  lockedAt       DateTime?
+  lastLoginAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  memberships    Member[]
+  auditLogs      AuditLog[]
+  refreshTokens  RefreshToken[]
+  invitations    Invitation[]
+  prompts        Prompt[]
+  promptVersions PromptVersion[]
 
   @@map("users")
 }
 
 model Organization {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String
-  slug      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  members   Member[]
-  invitations Invitation[]
-  settings  OrganizationSettings?
+  id              String             @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String             @unique
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+  members         Member[]
+  invitations     Invitation[]
+  settings        OrganizationSettings?
+  providerConfigs AiProviderConfig[]
+  prompts         Prompt[]
+  conversations   Conversation[]
+  usageLogs       AiUsageLog[]
 
   @@map("organizations")
 }
@@ -76,6 +82,189 @@ model OrganizationSettings {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_settings")
+}
+
+model AiProviderConfig {
+  id                   String         @id @default(uuid()) @db.Uuid
+  organizationId       String         @db.Uuid
+  provider             AiProvider
+  name                 String
+  encryptedCredentials String         // AES-256-GCM encrypted JSON payload
+  defaultModel         String?
+  temperature          Float?         @default(0.7)
+  maxTokens            Int?           @default(2048)
+  capabilities         String[]       @default([])
+  isDefault            Boolean        @default(false)
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  conversations        Conversation[]
+
+  organization         Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("ai_provider_configs")
+}
+
+enum PromptVisibility {
+  PRIVATE
+  ORGANIZATION
+  SYSTEM
+}
+
+enum PromptType {
+  CHAT
+  SYSTEM
+  EMBEDDING
+  COMPLETION
+}
+
+model PromptCategory {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  prompts     Prompt[]
+
+  @@map("prompt_categories")
+}
+
+model Prompt {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String?          @db.Uuid // null for SYSTEM prompts
+  categoryId     String           @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  visibility     PromptVisibility @default(ORGANIZATION)
+  type           PromptType       @default(CHAT)
+  createdById    String           @db.Uuid
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category       PromptCategory   @relation(fields: [categoryId], references: [id])
+  createdBy      User             @relation(fields: [createdById], references: [id])
+  versions       PromptVersion[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("prompts")
+}
+
+model PromptVersion {
+  id          String    @id @default(uuid()) @db.Uuid
+  promptId    String    @db.Uuid
+  version     Int       // integer version counter (e.g. 1, 2, 3)
+  template    String
+  changeLog   String?
+  isActive    Boolean   @default(true)
+  createdById String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  messages    Message[]
+
+  prompt      Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id])
+
+  @@unique([promptId, version])
+  @@map("prompt_versions")
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum FinishReason {
+  STOP
+  LENGTH
+  CONTENT_FILTER
+  CANCELLED
+  ERROR
+  TOOL_CALL
+}
+
+enum AiRequestStatus {
+  SUCCESS
+  FAILED
+  CANCELLED
+  TIMEOUT
+}
+
+model Conversation {
+  id               String             @id @default(uuid()) @db.Uuid
+  organizationId   String             @db.Uuid
+  title            String
+  provider         AiProvider
+  providerConfigId String             @db.Uuid
+  model            String
+  temperature      Float              @default(0.7)
+  systemPrompt     String?
+  status           ConversationStatus @default(ACTIVE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
+
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  providerConfig   AiProviderConfig   @relation(fields: [providerConfigId], references: [id])
+  messages         Message[]
+  usageLogs        AiUsageLog[]
+
+  @@index([organizationId])
+  @@map("conversations")
+}
+
+model Message {
+  id                String        @id @default(uuid()) @db.Uuid
+  conversationId    String        @db.Uuid
+  role              MessageRole
+  content           String
+  promptVersionId   String?       @db.Uuid
+  providerMessageId String?
+  finishReason      FinishReason?
+  latencyMs         Int?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+
+  conversation      Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  promptVersion     PromptVersion? @relation(fields: [promptVersionId], references: [id])
+
+  @@map("messages")
+}
+
+model AiUsageLog {
+  id               String          @id @default(uuid()) @db.Uuid
+  requestId        String          @unique @db.Uuid
+  organizationId   String          @db.Uuid
+  conversationId   String?         @db.Uuid
+  providerConfigId String          @db.Uuid
+  provider         AiProvider
+  model            String
+  promptTokens     Int             @default(0)
+  completionTokens Int             @default(0)
+  totalTokens      Int             @default(0)
+  estimatedCostUsd Float           @default(0.0)
+  status           AiRequestStatus
+  errorCode        String?
+  latencyMs        Int
+  createdAt        DateTime        @default(now())
+
+  organization     Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation     Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@map("ai_usage_logs")
 }
 
 model Member {

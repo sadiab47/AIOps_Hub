@@ -33,7 +33,11 @@ describe('AuthorizationService (RBAC-001)', () => {
 
     it('returns minimal permissions for VIEWER', () => {
       const permissions = service.getPermissionsForRole(OrgRole.VIEWER);
-      expect(permissions).toEqual([Permissions.organization.view]);
+      expect(permissions).toEqual([
+        Permissions.organization.view,
+        Permissions.provider.view,
+        Permissions.prompt.view,
+      ]);
     });
   });
 

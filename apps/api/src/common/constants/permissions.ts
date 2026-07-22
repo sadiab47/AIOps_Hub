@@ -22,6 +22,23 @@ export const Permissions = {
   settings: {
     update: 'settings:update',
   },
+  provider: {
+    view: 'provider:view',
+    create: 'provider:create',
+    update: 'provider:update',
+    delete: 'provider:delete',
+    validate: 'provider:validate',
+    setDefault: 'provider:setDefault',
+  },
+  prompt: {
+    view: 'prompt:view',
+    create: 'prompt:create',
+    update: 'prompt:update',
+    delete: 'prompt:delete',
+    versionCreate: 'prompt:version:create',
+    versionView: 'prompt:version:view',
+    render: 'prompt:render',
+  },
 } as const;
 
 type ValueOf<T> = T[keyof T];

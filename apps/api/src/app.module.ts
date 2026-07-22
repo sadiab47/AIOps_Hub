@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { EventsModule } from './common/events/events.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { EventsModule } from './common/events/events.module';
     UsersModule,
     AuthModule,
     OrganizationsModule,
+    AiModule,
   ],
   providers: [
     {
@@ -46,4 +48,3 @@ import { EventsModule } from './common/events/events.module';
   ],
 })
 export class AppModule {}
-
