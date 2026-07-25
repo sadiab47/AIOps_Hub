@@ -18,6 +18,10 @@ export interface CreateAgentInput {
     promptVersionId?: string;
     temperature?: number;
     maxTokens?: number;
+    executionTimeoutMs?: number;
+    retryLimit?: number;
+    streamingEnabled?: boolean;
+    memoryStrategyOverride?: string;
   };
 }
 

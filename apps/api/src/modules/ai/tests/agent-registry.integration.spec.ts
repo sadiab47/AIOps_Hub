@@ -97,6 +97,10 @@ describe('Agent Registry Integration Tests (AGENT-001)', () => {
             providerConfigId,
             model: 'gpt-4o',
             temperature: 0.5,
+            executionTimeoutMs: 5000,
+            retryLimit: 3,
+            streamingEnabled: true,
+            memoryStrategyOverride: 'custom-strategy',
           },
         })
         .expect(201);
@@ -104,7 +108,13 @@ describe('Agent Registry Integration Tests (AGENT-001)', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.name).toBe('Support Agent');
       expect(res.body.data.currentVersion).toBe(1);
+      expect(res.body.data.status).toBe('DRAFT');
+      expect(res.body.data.revision).toBe(0);
       expect(res.body.data.versions.length).toBe(1);
+      expect(res.body.data.versions[0].executionTimeoutMs).toBe(5000);
+      expect(res.body.data.versions[0].retryLimit).toBe(3);
+      expect(res.body.data.versions[0].streamingEnabled).toBe(true);
+      expect(res.body.data.versions[0].memoryStrategyOverride).toBe('custom-strategy');
       agentId = res.body.data.id;
     });
 
@@ -136,25 +146,27 @@ describe('Agent Registry Integration Tests (AGENT-001)', () => {
       expect(res.body.data[0].slug).toBe('support-agent');
     });
 
-    it('should support enabling and disabling agent statuses via actions', async () => {
-      // Disable
-      const disableRes = await request(app.getHttpServer())
-        .post(`/api/v1/ai/agents/${agentId}/disable`)
-        .set('Cookie', ownerCookies)
-        .set('x-organization-id', orgId)
-        .expect(200);
-      expect(disableRes.body.data.enabled).toBe(false);
-
-      // Enable
+    it('should support enabling and disabling agent statuses via actions updating status and incrementing revision', async () => {
+      // Enable (status -> ACTIVE)
       const enableRes = await request(app.getHttpServer())
         .post(`/api/v1/ai/agents/${agentId}/enable`)
         .set('Cookie', ownerCookies)
         .set('x-organization-id', orgId)
         .expect(200);
-      expect(enableRes.body.data.enabled).toBe(true);
+      expect(enableRes.body.data.status).toBe('ACTIVE');
+      expect(enableRes.body.data.revision).toBe(1);
+
+      // Disable (status -> DISABLED)
+      const disableRes = await request(app.getHttpServer())
+        .post(`/api/v1/ai/agents/${agentId}/disable`)
+        .set('Cookie', ownerCookies)
+        .set('x-organization-id', orgId)
+        .expect(200);
+      expect(disableRes.body.data.status).toBe('DISABLED');
+      expect(disableRes.body.data.revision).toBe(2);
     });
 
-    it('should support updating agent parameters creating Version 2 snapshot', async () => {
+    it('should support updating agent parameters creating Version 2 snapshot and incrementing revision', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/api/v1/ai/agents/${agentId}`)
         .set('Cookie', ownerCookies)
@@ -168,11 +180,12 @@ describe('Agent Registry Integration Tests (AGENT-001)', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.currentVersion).toBe(2);
+      expect(res.body.data.revision).toBe(3);
       expect(res.body.data.versions.length).toBe(2);
       expect(res.body.data.versions[0].model).toBe('gpt-4o-mini');
     });
 
-    it('should soft delete agent successfully', async () => {
+    it('should soft delete agent successfully and set status to ARCHIVED', async () => {
       await request(app.getHttpServer())
         .delete(`/api/v1/ai/agents/${agentId}`)
         .set('Cookie', ownerCookies)

@@ -20,6 +20,8 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
           slug: data.slug,
           description: data.description,
           createdById: data.createdById,
+          status: 'DRAFT',
+          revision: 0,
           currentVersion: 1,
         },
       });
@@ -33,6 +35,10 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
           promptVersionId: data.version.promptVersionId || undefined,
           temperature: data.version.temperature ?? 0.7,
           maxTokens: data.version.maxTokens || undefined,
+          executionTimeoutMs: data.version.executionTimeoutMs || undefined,
+          retryLimit: data.version.retryLimit || undefined,
+          streamingEnabled: data.version.streamingEnabled ?? false,
+          memoryStrategyOverride: data.version.memoryStrategyOverride || undefined,
         },
       });
 
@@ -74,10 +80,21 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
     data: CreateAgentInput['version'],
   ): Promise<AgentWithVersions> {
     return this.prisma.$transaction(async (tx) => {
+      // 1. Fetch current agent to implement optimistic locking check
+      const currentAgent = await tx.agent.findFirst({
+        where: { id, organizationId: orgId, deletedAt: null },
+      });
+
+      if (!currentAgent) {
+        throw new Error('Agent not found or has been deleted');
+      }
+
+      // 2. Perform updates and increment revision counter
       const agent = await tx.agent.update({
         where: { id },
         data: {
           currentVersion: nextVersion,
+          revision: { increment: 1 },
         },
       });
 
@@ -90,6 +107,10 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
           promptVersionId: data.promptVersionId || undefined,
           temperature: data.temperature ?? 0.7,
           maxTokens: data.maxTokens || undefined,
+          executionTimeoutMs: data.executionTimeoutMs || undefined,
+          retryLimit: data.retryLimit || undefined,
+          streamingEnabled: data.streamingEnabled ?? false,
+          memoryStrategyOverride: data.memoryStrategyOverride || undefined,
         },
       });
 
@@ -116,6 +137,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
       data: {
         name: data.name,
         description: data.description,
+        revision: { increment: 1 },
       },
     });
   }
@@ -125,7 +147,8 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
       where: { id },
       data: {
         deletedAt: new Date(),
-        enabled: false,
+        status: 'ARCHIVED',
+        revision: { increment: 1 },
       },
     });
   }
@@ -133,14 +156,20 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
   async enable(id: string, orgId: string): Promise<Agent> {
     return this.prisma.agent.update({
       where: { id },
-      data: { enabled: true },
+      data: {
+        status: 'ACTIVE',
+        revision: { increment: 1 },
+      },
     });
   }
 
   async disable(id: string, orgId: string): Promise<Agent> {
     return this.prisma.agent.update({
       where: { id },
-      data: { enabled: false },
+      data: {
+        status: 'DISABLED',
+        revision: { increment: 1 },
+      },
     });
   }
 

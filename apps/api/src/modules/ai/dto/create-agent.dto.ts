@@ -30,6 +30,27 @@ export class AgentVersionDto {
   @Min(1)
   @IsOptional()
   maxTokens?: number;
+
+  @ApiPropertyOptional({ description: 'Execution timeout limit in milliseconds' })
+  @IsNumber()
+  @Min(500)
+  @IsOptional()
+  executionTimeoutMs?: number;
+
+  @ApiPropertyOptional({ description: 'Number of execution retry attempts' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  retryLimit?: number;
+
+  @ApiPropertyOptional({ description: 'Flag enabling SSE execution responses stream' })
+  @IsOptional()
+  streamingEnabled?: boolean;
+
+  @ApiPropertyOptional({ description: 'Custom strategy to compute sliding window budget' })
+  @IsString()
+  @IsOptional()
+  memoryStrategyOverride?: string;
 }
 
 export class CreateAgentDto {
