@@ -6,7 +6,7 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 
 ---
 
-[![Version](https://img.shields.io/badge/Version-v0.4.0-blue.svg)](#)
+[![Version](https://img.shields.io/badge/Version-v0.4.0--dev-blue.svg)](#)
 [![Status](https://img.shields.io/badge/Status-Agent%20Platform%20Sprint%20Complete-green.svg)](#)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
@@ -16,7 +16,17 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 
 ---
 
-### 📊 Project Metrics & Architecture
+## 🎨 Console Previews
+
+### Landing Page Showcase
+![Landing Page Screenshot](docs/screenshots/landing_page.png)
+
+### Secure Console Access
+![Login Page Screenshot](docs/screenshots/login_page.png)
+
+---
+
+## 📊 Project Metrics & Architecture
 | Metric | Value | Details |
 | :--- | :--- | :--- |
 | **Architecture** | Monorepo / Modular Monolith | Next.js 15 App Router, NestJS 11, Turborepo |
@@ -29,12 +39,12 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 
 ## ⚡ Features
 
-* **✅ Enterprise Authentication**: Hybrid authentication supporting secure HTTP-only cookies for web apps and Bearer JWTs for APIs and CLIs.
-* **✅ Multi-Tenant Organizations**: Complete logical separation of tenants with separate workspaces and contexts.
-* **✅ Role Based Access Control**: Granular permission hierarchies (Owner, Admin, Manager, Member, Viewer).
-* **✅ Agent Registry (v0.4.0)**: Optimistic locking version histories, enabling status lifecycle toggles (`DRAFT`, `ACTIVE`, `DISABLED`, `ARCHIVED`).
-* **✅ Tool Framework (v0.4.0)**: Dynamic AJV-validated executor registries featuring Calculator, DateTime, UUID, JSON, and Whitelisted HTTP built-in tools.
-* **✅ Console Dashboard**: Reusable UI kit components with Monaco Editor code panel, 5-step wizard creation workflows, and Recharts cost analytics.
+* **✅ Enterprise Authentication**: Hybrid authentication supporting secure HTTP-only cookies for Next.js web console and Bearer JWTs for REST API integrations.
+* **✅ Multi-Tenant Isolation**: Complete logical separation of client organizations with switcher matrices and tenant context header guards.
+* **✅ Fine-Grained RBAC**: Granular permission hierarchies (Owner, Admin, Manager, Member, Viewer) mapped via pure policy engines.
+* **✅ Agent Registry (v0.4.0)**: Central agent registrations with optimistic locking revision counters and lifecycle state scopes (`DRAFT`, `ACTIVE`, `DISABLED`, `ARCHIVED`).
+* **✅ Tool Execution Framework (v0.4.0)**: Schema-validated executor registry hosting Calculator, DateTime, UUID, JSON utilities, and whitelisted HTTP tools.
+* **✅ Console Dashboard**: Reusable UI component layer featuring Monaco Editor workspace, 5-step Agent wizards, and Recharts cost analytics.
 
 ---
 
@@ -113,3 +123,15 @@ npm run dev
 ```
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:4000`
+
+---
+
+## 📅 Roadmap & Project Status
+
+### Project Status: `v0.4.0-dev`
+Current focus: **Frontend Console Shell integration & Agent Orchestration Engines**. All core multi-tenant databases, RBAC layers, and tool executors are fully tested and functional.
+
+### Upcoming Milestones
+- **⬜ AGENT-003**: Agent Execution Engine (loop executor, SSE stream dispatcher, execution traces).
+- **⬜ AGENT-004**: Playground Live Chat Console interface.
+- **⬜ AGENT-005**: Sequential workflow orchestration pipelines.
