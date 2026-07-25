@@ -8,3 +8,5 @@ This directory contains records of the major technical design decisions for the 
 * [ADR 0004: Multi-Tenancy Architecture](0004-multi-tenancy.md)
 * [ADR 0005: Multi-Device Session Management](0005-session-management.md)
 * [ADR 0006: Conversation & Streaming Architecture](0006-conversation-streaming.md)
+* [ADR 0007: Agent Registry & Tool Framework (v0.4)](0007-agent-tool-framework.md) *(Pending)*
+* [ADR 0008: CQRS Execution Strategy (v0.4)](0008-cqrs-execution.md) *(Pending)*

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-07-25
+
+### Added
+- **Agent Registry (AGENT-001)**: Developed Agent model and Version schemas, optimistic locking `revision` tracking, lifecycle `AgentStatus` states (`DRAFT`, `ACTIVE`, `DISABLED`, `ARCHIVED`), and REST admin endpoints.
+- **Tool Framework (AGENT-002)**: Built a modular execution framework using `ToolDefinition` interfaces, central `ToolRegistry`, dynamic `ToolResolver` engines, and AJV schema-validated `ToolExecutor` layers.
+- **Built-in Agent Tools**: Implemented sandbox-compliant tools for calculations (`CalculatorTool`), time retrieval (`DateTimeTool`), cryptographic UUIDs (`UuidGeneratorTool`), JSON formatter/minifier (`JsonUtilsTool`), string operations (`TextUtilsTool`), and whitelisted HTTP querying (`HttpClientTool`).
+- **Frontend Console Shell (Sprint 1)**: Formulated Next.js console layout wrapper using organization selectors, health polling monitors, dynamic active navigation indicators, and Axios cookie credentials configurations.
+- **Console Protected Routing & Auth**: Built login/signup pages and a custom JWT cookie verification routing middleware guarding `/(console)` views.
+- **Frontend Feature Upgrades (Sprint 2)**: Integrated a Monaco Editor prompt template editor with variable identification dashboards, 5-step Agent creation wizards, Provider management panels (validating/duplicating configs), and Recharts cost metrics visualizations.
+
+---
+
 ## [0.3.0] - 2026-07-22
 
 ### Added
