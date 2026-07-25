@@ -1,10 +1,10 @@
 import './globals.css';
 import { Metadata } from 'next';
+import { Providers } from '../components/providers';
 
 export const metadata: Metadata = {
   title: 'AIOps Hub — Enterprise AI Agent Platform',
-  description: 'Production-ready multi-tenant AI platform with Agent Registry, Prompt Library, streaming chat, and full usage analytics. Built with NestJS + Next.js 15.',
-  keywords: ['AI Platform', 'Agent Registry', 'LLM', 'Multi-tenant', 'NestJS', 'Next.js'],
+  description: 'Production-ready multi-tenant AI platform with Agent Registry, Prompt Library, streaming chat, and full usage analytics.',
 };
 
 export default function RootLayout({
@@ -22,7 +22,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-[#060608] text-[#f4f4f5]">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
