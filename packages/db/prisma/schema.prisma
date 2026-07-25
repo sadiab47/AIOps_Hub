@@ -52,6 +52,7 @@ model Organization {
   conversations   Conversation[]
   usageLogs       AiUsageLog[]
   agents          Agent[]
+  executions      AgentExecution[]
 
   @@map("organizations")
 }
@@ -385,18 +386,19 @@ enum AgentStatus {
 }
 
 model Agent {
-  id             String      @id @default(uuid()) @db.Uuid
-  organizationId String      @db.Uuid
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
   name           String
   slug           String
   description    String?
-  status         AgentStatus @default(DRAFT)
-  revision       Int         @default(0)
-  createdById    String      @db.Uuid
-  currentVersion Int         @default(1)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  status         AgentStatus      @default(DRAFT)
+  revision       Int              @default(0)
+  createdById    String           @db.Uuid
+  currentVersion Int              @default(1)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
+  executions     AgentExecution[]
 
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdByUser User           @relation(fields: [createdById], references: [id])
@@ -441,3 +443,46 @@ model AgentTool {
   @@id([agentId, toolId])
   @@map("agent_tools")
 }
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  TIMEOUT
+}
+
+model AgentExecution {
+  id               String          @id @default(uuid()) @db.Uuid
+  agentId          String          @db.Uuid
+  agentVersionId   String          @db.Uuid
+  providerConfigId String          @db.Uuid
+  model            String
+  conversationId   String?         @db.Uuid
+  organizationId   String          @db.Uuid
+  userId           String          @db.Uuid
+  status           ExecutionStatus @default(PENDING)
+  input            Json
+  output           Json?
+  startedAt        DateTime        @default(now())
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  latencyMs        Int?
+  promptTokens     Int             @default(0)
+  completionTokens Int             @default(0)
+  totalCost        Float           @default(0.0)
+  toolsInvoked     Json?           // Array of tool executions
+  errorMessage     String?
+  retryCount       Int             @default(0)
+  streaming        Boolean         @default(false)
+  executionMode    String          @default("SINGLE")
+  requestId        String          @db.Uuid
+  createdAt        DateTime        @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("agent_executions")
+}
+

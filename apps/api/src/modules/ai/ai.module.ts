@@ -57,8 +57,24 @@ import { JsonUtilsTool } from './tools/builtins/json-utils.tool';
 import { HttpClientTool } from './tools/builtins/http-client.tool';
 import { TextUtilsTool } from './tools/builtins/text-utils.tool';
 
+import { EventEmitterModule } from '@nestjs/event-emitter';
+
+// Execution Engine Components
+import { ExecutionRepository } from './execution/repositories/execution.repository';
+import { ExecutionService } from './execution/services/execution.service';
+import { ToolLoopService } from './execution/services/tool-loop.service';
+import { ExecutionRuntimeService } from './execution/services/execution-runtime.service';
+import { ExecutionController } from './execution/controllers/execution.controller';
+
 @Module({
-  imports: [DatabaseModule, EventsModule, CommonAuthModule, OrganizationsModule, AiCommonModule],
+  imports: [
+    DatabaseModule,
+    EventsModule,
+    CommonAuthModule,
+    OrganizationsModule,
+    AiCommonModule,
+    EventEmitterModule.forRoot(),
+  ],
   controllers: [
     AiProvidersController,
     PromptsController,
@@ -66,6 +82,7 @@ import { TextUtilsTool } from './tools/builtins/text-utils.tool';
     UsageController,
     AgentController,
     ToolController,
+    ExecutionController,
   ],
   providers: [
     {
@@ -121,6 +138,12 @@ import { TextUtilsTool } from './tools/builtins/text-utils.tool';
     JsonUtilsTool,
     HttpClientTool,
     TextUtilsTool,
+
+    // Execution Engine
+    ExecutionRepository,
+    ExecutionService,
+    ToolLoopService,
+    ExecutionRuntimeService,
   ],
   exports: [
     AiProviderService,
@@ -146,6 +169,10 @@ import { TextUtilsTool } from './tools/builtins/text-utils.tool';
     ToolRegistry,
     ToolResolver,
     ToolExecutor,
+
+    // Execution Engine
+    ExecutionService,
+    ExecutionRuntimeService,
   ],
 })
 export class AiModule implements OnModuleInit {
