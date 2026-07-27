@@ -7,6 +7,7 @@ This document provides a comprehensive overview of the authentication system imp
 ## 1. Overview
 
 The authentication module is designed as a secure, stateless-JWT-access and stateful-session-refresh hybrid model.
+
 - **Access Tokens**: Short-lived (15 minutes), stateless JWTs carried via secure cookies for sub-millisecond API request authorization.
 - **Refresh Tokens**: Long-lived (30 days), stateful tokens tracked in the PostgreSQL database via Prisma. Every single refresh request triggers a **rotation** (revoking the old refresh token and issuing a brand new one) to mitigate replay attacks.
 
@@ -75,6 +76,7 @@ graph TD
 ## 4. Session Lifecycle & Flow Diagrams
 
 ### Login Flow
+
 Exposes `POST /api/v1/auth/login`. Validates credentials, creates a stateful session record, hashes the refresh token using SHA-256 before storage, and attaches the HTTP-only cookies to the response header.
 
 ```mermaid
@@ -103,7 +105,8 @@ sequenceDiagram
 ```
 
 ### Refresh & Rotation Flow
-Exposes `POST /api/v1/auth/refresh`. When a client exchanges their refresh token, the old token is immediately invalidated. A new refresh token is issued, hashed, and updated on the existing session record. 
+
+Exposes `POST /api/v1/auth/refresh`. When a client exchanges their refresh token, the old token is immediately invalidated. A new refresh token is issued, hashed, and updated on the existing session record.
 
 If a refresh token is reused (indicating a stolen token replay attack), **all active sessions** for that user are immediately revoked.
 
@@ -138,6 +141,7 @@ sequenceDiagram
 ```
 
 ### Logout Flow
+
 Exposes `POST /api/v1/auth/logout` (single device session) and `POST /api/v1/auth/logout-all` (all multi-device sessions). Both routes are fully idempotent. If a token is already revoked or missing, the controller still clears the client-side cookies and returns `200 OK` safely.
 
 ```mermaid

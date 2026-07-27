@@ -1,7 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { EventBusService } from '../../../common/events/event-bus.service';
-import { MessageStreamedEvent } from '../events/chat.events';
-import { ConversationMemoryService } from './conversation-memory.service';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { EventBusService } from "../../../common/events/event-bus.service";
+import { MessageStreamedEvent } from "../events/chat.events";
+import { ConversationMemoryService } from "./conversation-memory.service";
 
 @Injectable()
 export class MemoryEventListener implements OnModuleInit {

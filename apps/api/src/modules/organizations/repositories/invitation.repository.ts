@@ -1,14 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { InvitationRepositoryInterface } from './invitation-repository.interface';
-import { AuditEvent } from './organization-repository.interface';
-import { Invitation, Member, Prisma, OrgRole, InvitationStatus } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { InvitationRepositoryInterface } from "./invitation-repository.interface";
+import { AuditEvent } from "./organization-repository.interface";
+import {
+  Invitation,
+  Member,
+  Prisma,
+  OrgRole,
+  InvitationStatus,
+} from "@aiops-hub/db";
 
 @Injectable()
 export class InvitationRepository implements InvitationRepositoryInterface {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.InvitationUncheckedCreateInput): Promise<Invitation> {
+  async create(
+    data: Prisma.InvitationUncheckedCreateInput,
+  ): Promise<Invitation> {
     return this.prisma.invitation.create({ data });
   }
 
@@ -23,7 +31,10 @@ export class InvitationRepository implements InvitationRepositoryInterface {
     });
   }
 
-  async findPendingByEmailAndOrg(email: string, orgId: string): Promise<Invitation | null> {
+  async findPendingByEmailAndOrg(
+    email: string,
+    orgId: string,
+  ): Promise<Invitation | null> {
     return this.prisma.invitation.findFirst({
       where: {
         email,
@@ -43,7 +54,10 @@ export class InvitationRepository implements InvitationRepositoryInterface {
     });
   }
 
-  async update(id: string, data: Prisma.InvitationUpdateInput): Promise<Invitation> {
+  async update(
+    id: string,
+    data: Prisma.InvitationUpdateInput,
+  ): Promise<Invitation> {
     return this.prisma.invitation.update({
       where: { id },
       data,

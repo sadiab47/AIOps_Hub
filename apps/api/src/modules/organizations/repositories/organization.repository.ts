@@ -1,7 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { OrganizationRepositoryInterface, AuditEvent } from './organization-repository.interface';
-import { Organization, Prisma, OrgRole, Member, OrganizationSettings } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import {
+  OrganizationRepositoryInterface,
+  AuditEvent,
+} from "./organization-repository.interface";
+import {
+  Organization,
+  Prisma,
+  OrgRole,
+  Member,
+  OrganizationSettings,
+} from "@aiops-hub/db";
 
 @Injectable()
 export class OrganizationRepository implements OrganizationRepositoryInterface {
@@ -28,8 +37,8 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
       await tx.organizationSettings.create({
         data: {
           organizationId: org.id,
-          timezone: 'UTC',
-          locale: 'en',
+          timezone: "UTC",
+          locale: "en",
         },
       });
 
@@ -67,7 +76,9 @@ export class OrganizationRepository implements OrganizationRepositoryInterface {
     });
   }
 
-  async findUserOrganizations(userId: string): Promise<(Organization & { role: string })[]> {
+  async findUserOrganizations(
+    userId: string,
+  ): Promise<(Organization & { role: string })[]> {
     const memberships = await this.prisma.member.findMany({
       where: {
         userId,

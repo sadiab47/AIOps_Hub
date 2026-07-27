@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { UsersService } from './services/users.service';
-import { UserRepository } from './repositories/user.repository';
-import { USER_REPOSITORY_TOKEN } from './repositories/user-repository.interface';
+import { Module } from "@nestjs/common";
+import { UsersService } from "./services/users.service";
+import { UserRepository } from "./repositories/user.repository";
+import { USER_REPOSITORY_TOKEN } from "./repositories/user-repository.interface";
 
 @Module({
   providers: [

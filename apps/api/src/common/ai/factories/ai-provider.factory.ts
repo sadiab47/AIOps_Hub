@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { AiProvider } from '../types/ai-provider.interface';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { AiProvider } from "../types/ai-provider.interface";
 
 @Injectable()
 export class AiProviderFactory {
@@ -19,7 +19,9 @@ export class AiProviderFactory {
     const key = providerId.toUpperCase();
     const provider = this.providers.get(key);
     if (!provider) {
-      throw new NotFoundException(`AI Provider '${providerId}' is not supported or registered`);
+      throw new NotFoundException(
+        `AI Provider '${providerId}' is not supported or registered`,
+      );
     }
     return provider;
   }

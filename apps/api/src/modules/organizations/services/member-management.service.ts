@@ -4,23 +4,23 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
-} from '@nestjs/common';
-import { OrgRole, Member } from '@aiops-hub/db';
+} from "@nestjs/common";
+import { OrgRole, Member } from "@aiops-hub/db";
 import {
   MEMBER_REPOSITORY_TOKEN,
   MemberRepositoryInterface,
-} from '../repositories/member-repository.interface';
-import { AuthorizationService } from '../../../common/auth/authorization.service';
-import { EventBusService } from '../../../common/events/event-bus.service';
-import { EventCorrelationContext } from '../../../common/events/domain-event';
+} from "../repositories/member-repository.interface";
+import { AuthorizationService } from "../../../common/auth/authorization.service";
+import { EventBusService } from "../../../common/events/event-bus.service";
+import { EventCorrelationContext } from "../../../common/events/domain-event";
 import {
   MemberRoleChangedEvent,
   MemberRemovedEvent,
   OwnershipTransferredEvent,
   MemberLeftEvent,
-} from '../../../common/events/types/member.events';
-import { MemberSummaryDto } from '../dto/member-summary.dto';
-import { RequestContext } from '../../../common/auth/request-context.interface';
+} from "../../../common/events/types/member.events";
+import { MemberSummaryDto } from "../dto/member-summary.dto";
+import { RequestContext } from "../../../common/auth/request-context.interface";
 
 @Injectable()
 export class MemberManagementService {
@@ -34,13 +34,15 @@ export class MemberManagementService {
   // ── Queries ──────────────────────────────────────────────────────────────
 
   async listMembers(orgId: string): Promise<MemberSummaryDto[]> {
-    const members = await this.memberRepository.findMembersByOrganization(orgId);
+    const members =
+      await this.memberRepository.findMembersByOrganization(orgId);
     return members.map(this.toSummaryDto);
   }
 
   async getMember(orgId: string, memberId: string): Promise<MemberSummaryDto> {
     const member = await this.memberRepository.findMemberById(memberId, orgId);
-    if (!member) throw new NotFoundException('Member not found in this organization');
+    if (!member)
+      throw new NotFoundException("Member not found in this organization");
     return this.toSummaryDto(member);
   }
 
@@ -58,20 +60,29 @@ export class MemberManagementService {
       this.memberRepository.findMemberById(memberId, orgId),
     ]);
 
-    if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
-    if (!target) throw new NotFoundException('Member not found in this organization');
+    if (!actorMembership)
+      throw new ForbiddenException("You are not a member of this organization");
+    if (!target)
+      throw new NotFoundException("Member not found in this organization");
 
     const actorCtx: RequestContext = {
       userId: actorId,
       organizationId: orgId,
       organizationRole: actorMembership.role,
-      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+      permissions: this.authorizationService.getPermissionsForRole(
+        actorMembership.role as OrgRole,
+      ),
     };
 
     // Evaluate policy-based authorization
-    const policyResult = this.authorizationService.canManageMember(actorCtx, target, newRole);
+    const policyResult = this.authorizationService.canManageMember(
+      actorCtx,
+      target,
+      newRole,
+    );
     if (!policyResult.allowed) {
-      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      if (policyResult.code === "NOT_FOUND")
+        throw new NotFoundException(policyResult.reason);
       throw new ForbiddenException(policyResult.reason);
     }
 
@@ -80,7 +91,7 @@ export class MemberManagementService {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
         throw new ConflictException(
-          'Cannot demote the last owner of this organization',
+          "Cannot demote the last owner of this organization",
         );
       }
     }
@@ -115,20 +126,28 @@ export class MemberManagementService {
       this.memberRepository.findMemberById(memberId, orgId),
     ]);
 
-    if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
-    if (!target) throw new NotFoundException('Member not found in this organization');
+    if (!actorMembership)
+      throw new ForbiddenException("You are not a member of this organization");
+    if (!target)
+      throw new NotFoundException("Member not found in this organization");
 
     const actorCtx: RequestContext = {
       userId: actorId,
       organizationId: orgId,
       organizationRole: actorMembership.role,
-      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+      permissions: this.authorizationService.getPermissionsForRole(
+        actorMembership.role as OrgRole,
+      ),
     };
 
     // Evaluate policy-based authorization
-    const policyResult = this.authorizationService.canManageMember(actorCtx, target);
+    const policyResult = this.authorizationService.canManageMember(
+      actorCtx,
+      target,
+    );
     if (!policyResult.allowed) {
-      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      if (policyResult.code === "NOT_FOUND")
+        throw new NotFoundException(policyResult.reason);
       throw new ForbiddenException(policyResult.reason);
     }
 
@@ -137,7 +156,7 @@ export class MemberManagementService {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
         throw new ConflictException(
-          'Cannot remove the last owner of this organization',
+          "Cannot remove the last owner of this organization",
         );
       }
     }
@@ -168,23 +187,34 @@ export class MemberManagementService {
       this.memberRepository.findMemberById(targetMemberId, orgId),
     ]);
 
-    if (!actorMembership) throw new ForbiddenException('You are not a member of this organization');
+    if (!actorMembership)
+      throw new ForbiddenException("You are not a member of this organization");
 
     const actorCtx: RequestContext = {
       userId: actorId,
       organizationId: orgId,
       organizationRole: actorMembership.role,
-      permissions: this.authorizationService.getPermissionsForRole(actorMembership.role as OrgRole),
+      permissions: this.authorizationService.getPermissionsForRole(
+        actorMembership.role as OrgRole,
+      ),
     };
 
     // Evaluate policy-based authorization
-    const policyResult = this.authorizationService.canTransferOwnership(actorCtx, target);
+    const policyResult = this.authorizationService.canTransferOwnership(
+      actorCtx,
+      target,
+    );
     if (!policyResult.allowed) {
-      if (policyResult.code === 'NOT_FOUND') throw new NotFoundException(policyResult.reason);
+      if (policyResult.code === "NOT_FOUND")
+        throw new NotFoundException(policyResult.reason);
       throw new ForbiddenException(policyResult.reason);
     }
 
-    await this.memberRepository.transferOwnershipTx(orgId, actorMembership.id, targetMemberId);
+    await this.memberRepository.transferOwnershipTx(
+      orgId,
+      actorMembership.id,
+      targetMemberId,
+    );
 
     this.eventBus.publish(
       new OwnershipTransferredEvent(
@@ -205,9 +235,12 @@ export class MemberManagementService {
     orgId: string,
     correlation: EventCorrelationContext = {},
   ): Promise<void> {
-    const actorMembership = await this.memberRepository.findMembership(actorId, orgId);
+    const actorMembership = await this.memberRepository.findMembership(
+      actorId,
+      orgId,
+    );
     if (!actorMembership) {
-      throw new ForbiddenException('You are not a member of this organization');
+      throw new ForbiddenException("You are not a member of this organization");
     }
 
     // Business Invariant: OWNER can leave only if other owners exist
@@ -215,8 +248,8 @@ export class MemberManagementService {
       const ownerCount = await this.memberRepository.countOwners(orgId);
       if (ownerCount <= 1) {
         throw new ConflictException(
-          'Cannot leave organization while you are the last owner. ' +
-          'Transfer ownership or delete the organization.',
+          "Cannot leave organization while you are the last owner. " +
+            "Transfer ownership or delete the organization.",
         );
       }
     }

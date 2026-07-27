@@ -1,4 +1,4 @@
-import { Permission } from '../constants/permissions';
+import { Permission } from "../constants/permissions";
 
 export interface RequestContext {
   userId?: string;

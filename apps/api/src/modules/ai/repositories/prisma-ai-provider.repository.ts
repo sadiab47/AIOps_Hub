@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { AiProviderConfig, Prisma } from '@aiops-hub/db';
-import { AiProviderRepositoryInterface } from './ai-provider-repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { AiProviderConfig, Prisma } from "@aiops-hub/db";
+import { AiProviderRepositoryInterface } from "./ai-provider-repository.interface";
 
 @Injectable()
 export class PrismaAiProviderRepository implements AiProviderRepositoryInterface {
@@ -40,7 +40,10 @@ export class PrismaAiProviderRepository implements AiProviderRepositoryInterface
     });
   }
 
-  async findByName(orgId: string, name: string): Promise<AiProviderConfig | null> {
+  async findByName(
+    orgId: string,
+    name: string,
+  ): Promise<AiProviderConfig | null> {
     return this.prisma.aiProviderConfig.findUnique({
       where: {
         organizationId_name: {
@@ -60,11 +63,14 @@ export class PrismaAiProviderRepository implements AiProviderRepositoryInterface
   async listByOrg(orgId: string): Promise<AiProviderConfig[]> {
     return this.prisma.aiProviderConfig.findMany({
       where: { organizationId: orgId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
-  async unsetDefault(orgId: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async unsetDefault(
+    orgId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const client = tx || this.prisma;
     await client.aiProviderConfig.updateMany({
       where: { organizationId: orgId, isDefault: true },

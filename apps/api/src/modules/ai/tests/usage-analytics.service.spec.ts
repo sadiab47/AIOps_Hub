@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { USAGE_REPOSITORY_TOKEN } from '../repositories/usage-repository.interface';
-import { UsageAnalyticsService } from '../services/usage-analytics.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { USAGE_REPOSITORY_TOKEN } from "../repositories/usage-repository.interface";
+import { UsageAnalyticsService } from "../services/usage-analytics.service";
 
-describe('UsageAnalyticsService', () => {
+describe("UsageAnalyticsService", () => {
   let service: UsageAnalyticsService;
   let repository: any;
 
@@ -30,12 +30,16 @@ describe('UsageAnalyticsService', () => {
     service = module.get<UsageAnalyticsService>(UsageAnalyticsService);
   });
 
-  it('should request and return summary DTO metrics', async () => {
-    const summary = await service.getSummary('org-123', '7d');
+  it("should request and return summary DTO metrics", async () => {
+    const summary = await service.getSummary("org-123", "7d");
 
     expect(summary.requests).toBe(10);
     expect(summary.totalTokens).toBe(1500);
     expect(summary.estimatedCostUsd).toBe(0.05);
-    expect(repository.getSummary).toHaveBeenCalledWith('org-123', expect.any(Date), expect.any(Date));
+    expect(repository.getSummary).toHaveBeenCalledWith(
+      "org-123",
+      expect.any(Date),
+      expect.any(Date),
+    );
   });
 });

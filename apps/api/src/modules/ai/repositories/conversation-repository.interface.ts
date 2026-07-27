@@ -1,6 +1,8 @@
-import { Conversation, Message, AiUsageLog, Prisma } from '@aiops-hub/db';
+import { Conversation, Message, AiUsageLog, Prisma } from "@aiops-hub/db";
 
-export const CONVERSATION_REPOSITORY_TOKEN = Symbol('CONVERSATION_REPOSITORY_TOKEN');
+export const CONVERSATION_REPOSITORY_TOKEN = Symbol(
+  "CONVERSATION_REPOSITORY_TOKEN",
+);
 
 export interface ConversationRepositoryInterface {
   createConversation(

@@ -1,9 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException, ConflictException } from '@nestjs/common';
-import { UsersService } from '../services/users.service';
-import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../repositories/user-repository.interface';
+import { Test, TestingModule } from "@nestjs/testing";
+import { UnauthorizedException, ConflictException } from "@nestjs/common";
+import { UsersService } from "../services/users.service";
+import {
+  USER_REPOSITORY_TOKEN,
+  UserRepositoryInterface,
+} from "../repositories/user-repository.interface";
 
-describe('UsersService', () => {
+describe("UsersService", () => {
   let service: UsersService;
   let userRepository: jest.Mocked<UserRepositoryInterface>;
 
@@ -27,19 +30,19 @@ describe('UsersService', () => {
     userRepository = module.get(USER_REPOSITORY_TOKEN);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getCurrentProfile', () => {
-    const userId = 'user-uuid-123';
+  describe("getCurrentProfile", () => {
+    const userId = "user-uuid-123";
 
-    it('should successfully return the user profile DTO when active', async () => {
+    it("should successfully return the user profile DTO when active", async () => {
       const mockUser = {
         id: userId,
-        email: 'jane@example.com',
-        name: 'Jane Doe',
-        passwordHash: 'hash',
+        email: "jane@example.com",
+        name: "Jane Doe",
+        passwordHash: "hash",
         isActive: true,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -62,7 +65,7 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw UnauthorizedException if user does not exist', async () => {
+    it("should throw UnauthorizedException if user does not exist", async () => {
       userRepository.findById.mockResolvedValue(null);
 
       await expect(service.getCurrentProfile(userId)).rejects.toThrow(
@@ -70,12 +73,12 @@ describe('UsersService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if user is inactive', async () => {
+    it("should throw UnauthorizedException if user is inactive", async () => {
       const mockUser = {
         id: userId,
-        email: 'jane@example.com',
-        name: 'Jane Doe',
-        passwordHash: 'hash',
+        email: "jane@example.com",
+        name: "Jane Doe",
+        passwordHash: "hash",
         isActive: false,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -91,12 +94,12 @@ describe('UsersService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if account is locked', async () => {
+    it("should throw UnauthorizedException if account is locked", async () => {
       const mockUser = {
         id: userId,
-        email: 'jane@example.com',
-        name: 'Jane Doe',
-        passwordHash: 'hash',
+        email: "jane@example.com",
+        name: "Jane Doe",
+        passwordHash: "hash",
         isActive: true,
         lockedAt: new Date(),
         lastLoginAt: new Date(),

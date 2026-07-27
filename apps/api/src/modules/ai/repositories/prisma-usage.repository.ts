@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { AiUsageLog, AiRequestStatus, Prisma } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { AiUsageLog, AiRequestStatus, Prisma } from "@aiops-hub/db";
 import {
   UsageRepositoryInterface,
   UsageSummary,
   GroupedMetrics,
   DailyTrend,
-} from './usage-repository.interface';
+} from "./usage-repository.interface";
 
 @Injectable()
 export class PrismaUsageRepository implements UsageRepositoryInterface {
@@ -16,7 +16,11 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
     return this.prisma.aiUsageLog.create({ data });
   }
 
-  async getSummary(orgId: string, startDate?: Date, endDate?: Date): Promise<UsageSummary> {
+  async getSummary(
+    orgId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<UsageSummary> {
     const where: Prisma.AiUsageLogWhereInput = {
       organizationId: orgId,
     };
@@ -41,18 +45,25 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
     });
 
     const statusCounts = await this.prisma.aiUsageLog.groupBy({
-      by: ['status'],
+      by: ["status"],
       where,
       _count: { id: true },
     });
 
     const requests = aggregations._count.id || 0;
-    const successfulRequests = statusCounts.find((s) => s.status === AiRequestStatus.SUCCESS)?._count.id || 0;
-    const failedRequests = statusCounts.find((s) => s.status === AiRequestStatus.FAILED)?._count.id || 0;
-    const cancelledRequests = statusCounts.find((s) => s.status === AiRequestStatus.CANCELLED)?._count.id || 0;
+    const successfulRequests =
+      statusCounts.find((s) => s.status === AiRequestStatus.SUCCESS)?._count
+        .id || 0;
+    const failedRequests =
+      statusCounts.find((s) => s.status === AiRequestStatus.FAILED)?._count
+        .id || 0;
+    const cancelledRequests =
+      statusCounts.find((s) => s.status === AiRequestStatus.CANCELLED)?._count
+        .id || 0;
 
     const estimatedCostUsd = aggregations._sum.estimatedCostUsd || 0.0;
-    const averageCostPerRequest = requests > 0 ? Number((estimatedCostUsd / requests).toFixed(6)) : 0.0;
+    const averageCostPerRequest =
+      requests > 0 ? Number((estimatedCostUsd / requests).toFixed(6)) : 0.0;
 
     return {
       requests,
@@ -70,7 +81,7 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
 
   async getProviderDistribution(orgId: string): Promise<GroupedMetrics[]> {
     const data = await this.prisma.aiUsageLog.groupBy({
-      by: ['provider'],
+      by: ["provider"],
       where: { organizationId: orgId },
       _count: { id: true },
       _sum: {
@@ -89,7 +100,7 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
 
   async getModelDistribution(orgId: string): Promise<GroupedMetrics[]> {
     const data = await this.prisma.aiUsageLog.groupBy({
-      by: ['model'],
+      by: ["model"],
       where: { organizationId: orgId },
       _count: { id: true },
       _sum: {
@@ -171,7 +182,8 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
       totalTokens: aggregations._sum.totalTokens || 0,
       estimatedCostUsd: cost,
       averageLatencyMs: Math.round(aggregations._avg.latencyMs || 0),
-      averageCostPerRequest: requests > 0 ? Number((cost / requests).toFixed(6)) : 0.0,
+      averageCostPerRequest:
+        requests > 0 ? Number((cost / requests).toFixed(6)) : 0.0,
     };
   }
 
@@ -180,7 +192,9 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
     return this.getSummary(orgId);
   }
 
-  async getLatencyMetrics(orgId: string): Promise<{ averageLatencyMs: number; maxLatencyMs: number }> {
+  async getLatencyMetrics(
+    orgId: string,
+  ): Promise<{ averageLatencyMs: number; maxLatencyMs: number }> {
     const data = await this.prisma.aiUsageLog.aggregate({
       where: { organizationId: orgId },
       _avg: { latencyMs: true },
@@ -195,7 +209,7 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
 
   async getStatusDistribution(orgId: string): Promise<GroupedMetrics[]> {
     const data = await this.prisma.aiUsageLog.groupBy({
-      by: ['status'],
+      by: ["status"],
       where: { organizationId: orgId },
       _count: { id: true },
     });
@@ -211,7 +225,7 @@ export class PrismaUsageRepository implements UsageRepositoryInterface {
   async listLogs(orgId: string, limit = 50): Promise<AiUsageLog[]> {
     return this.prisma.aiUsageLog.findMany({
       where: { organizationId: orgId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
     });
   }

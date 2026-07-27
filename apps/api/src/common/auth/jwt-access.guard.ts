@@ -1,5 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { TokenService } from './token.service';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { TokenService } from "./token.service";
 
 @Injectable()
 export class JwtAccessGuard implements CanActivate {
@@ -10,7 +15,7 @@ export class JwtAccessGuard implements CanActivate {
     const token = request.cookies?.aiops_access_token;
 
     if (!token) {
-      throw new UnauthorizedException('Access token missing');
+      throw new UnauthorizedException("Access token missing");
     }
 
     try {
@@ -23,7 +28,7 @@ export class JwtAccessGuard implements CanActivate {
       };
       return true;
     } catch (e) {
-      throw new UnauthorizedException('Invalid or expired access token');
+      throw new UnauthorizedException("Invalid or expired access token");
     }
   }
 }

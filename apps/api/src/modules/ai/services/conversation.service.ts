@@ -1,11 +1,11 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Conversation, Message, MessageRole, Prisma } from '@aiops-hub/db';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { Conversation, Message, MessageRole, Prisma } from "@aiops-hub/db";
 import {
   CONVERSATION_REPOSITORY_TOKEN,
   ConversationRepositoryInterface,
-} from '../repositories/conversation-repository.interface';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { CreateConversationDto } from '../dto/create-conversation.dto';
+} from "../repositories/conversation-repository.interface";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { CreateConversationDto } from "../dto/create-conversation.dto";
 
 @Injectable()
 export class ConversationService {
@@ -15,12 +15,17 @@ export class ConversationService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(orgId: string, dto: CreateConversationDto): Promise<Conversation> {
+  async create(
+    orgId: string,
+    dto: CreateConversationDto,
+  ): Promise<Conversation> {
     const providerConfig = await this.prisma.aiProviderConfig.findFirst({
       where: { id: dto.providerConfigId, organizationId: orgId },
     });
     if (!providerConfig) {
-      throw new NotFoundException('AI Provider configuration not found in this organization');
+      throw new NotFoundException(
+        "AI Provider configuration not found in this organization",
+      );
     }
 
     return this.repository.executeTransaction(async (tx) => {
@@ -52,10 +57,13 @@ export class ConversationService {
     });
   }
 
-  async getOne(orgId: string, id: string): Promise<Conversation & { messages: Message[] }> {
+  async getOne(
+    orgId: string,
+    id: string,
+  ): Promise<Conversation & { messages: Message[] }> {
     const conversation = await this.repository.getConversation(id, orgId);
     if (!conversation) {
-      throw new NotFoundException('Conversation not found');
+      throw new NotFoundException("Conversation not found");
     }
     const messages = await this.repository.listMessages(id);
     return {
@@ -71,7 +79,7 @@ export class ConversationService {
   async delete(orgId: string, id: string): Promise<void> {
     const conversation = await this.repository.getConversation(id, orgId);
     if (!conversation) {
-      throw new NotFoundException('Conversation not found');
+      throw new NotFoundException("Conversation not found");
     }
     await this.repository.deleteConversation(id);
   }

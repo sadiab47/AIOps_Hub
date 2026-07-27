@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { Prompt, PromptVersion, PromptVisibility, Prisma } from '@aiops-hub/db';
-import { PromptRepositoryInterface } from './prompt-repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { Prompt, PromptVersion, PromptVisibility, Prisma } from "@aiops-hub/db";
+import { PromptRepositoryInterface } from "./prompt-repository.interface";
 
 @Injectable()
 export class PrismaPromptRepository implements PromptRepositoryInterface {
@@ -78,18 +78,21 @@ export class PrismaPromptRepository implements PromptRepositoryInterface {
       include: {
         category: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async getLatestVersion(promptId: string): Promise<PromptVersion | null> {
     return this.prisma.promptVersion.findFirst({
       where: { promptId, isActive: true },
-      orderBy: { version: 'desc' },
+      orderBy: { version: "desc" },
     });
   }
 
-  async getVersion(promptId: string, version: number): Promise<PromptVersion | null> {
+  async getVersion(
+    promptId: string,
+    version: number,
+  ): Promise<PromptVersion | null> {
     return this.prisma.promptVersion.findUnique({
       where: {
         promptId_version: {
@@ -103,7 +106,7 @@ export class PrismaPromptRepository implements PromptRepositoryInterface {
   async listVersions(promptId: string): Promise<PromptVersion[]> {
     return this.prisma.promptVersion.findMany({
       where: { promptId },
-      orderBy: { version: 'desc' },
+      orderBy: { version: "desc" },
     });
   }
 

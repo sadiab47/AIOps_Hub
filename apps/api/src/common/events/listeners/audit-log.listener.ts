@@ -1,12 +1,15 @@
-import { Injectable, OnModuleInit, Inject, Logger } from '@nestjs/common';
-import { EventBusService } from '../event-bus.service';
-import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../database/audit-log-repository.interface';
+import { Injectable, OnModuleInit, Inject, Logger } from "@nestjs/common";
+import { EventBusService } from "../event-bus.service";
+import {
+  AUDIT_LOG_REPOSITORY_TOKEN,
+  AuditLogRepositoryInterface,
+} from "../../database/audit-log-repository.interface";
 import {
   OrganizationCreatedEvent,
   OrganizationUpdatedEvent,
   OrganizationSettingsUpdatedEvent,
   SlugChangedEvent,
-} from '../types/organization.events';
+} from "../types/organization.events";
 import {
   MemberJoinedEvent,
   InvitationAcceptedEvent,
@@ -15,7 +18,7 @@ import {
   MemberRemovedEvent,
   OwnershipTransferredEvent,
   MemberLeftEvent,
-} from '../types/member.events';
+} from "../types/member.events";
 
 @Injectable()
 export class AuditLogListener implements OnModuleInit {
@@ -33,14 +36,17 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.correlation.userId || event.payload.ownerUserId,
           action: OrganizationCreatedEvent.EVENT_NAME,
-          entityName: 'organization',
+          entityName: "organization",
           entityId: event.payload.id,
           details: { name: event.payload.name, slug: event.payload.slug },
           ipAddress: event.correlation.ipAddress || null,
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${OrganizationCreatedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${OrganizationCreatedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -49,39 +55,51 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.correlation.userId || null,
           action: OrganizationUpdatedEvent.EVENT_NAME,
-          entityName: 'organization',
+          entityName: "organization",
           entityId: event.payload.id,
-          details: { field: 'name', old: event.payload.oldName, new: event.payload.newName },
+          details: {
+            field: "name",
+            old: event.payload.oldName,
+            new: event.payload.newName,
+          },
           ipAddress: event.correlation.ipAddress || null,
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${OrganizationUpdatedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${OrganizationUpdatedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
-    this.eventBus.ofType(OrganizationSettingsUpdatedEvent).subscribe(async (event) => {
-      try {
-        await this.auditLogRepository.create({
-          userId: event.correlation.userId || null,
-          action: OrganizationSettingsUpdatedEvent.EVENT_NAME,
-          entityName: 'organization_settings',
-          entityId: event.payload.id,
-          details: event.payload.changedFields,
-          ipAddress: event.correlation.ipAddress || null,
-          userAgent: event.correlation.userAgent || null,
-        });
-      } catch (err) {
-        this.logger.error(`Failed to log ${OrganizationSettingsUpdatedEvent.EVENT_NAME}`, err);
-      }
-    });
+    this.eventBus
+      .ofType(OrganizationSettingsUpdatedEvent)
+      .subscribe(async (event) => {
+        try {
+          await this.auditLogRepository.create({
+            userId: event.correlation.userId || null,
+            action: OrganizationSettingsUpdatedEvent.EVENT_NAME,
+            entityName: "organization_settings",
+            entityId: event.payload.id,
+            details: event.payload.changedFields,
+            ipAddress: event.correlation.ipAddress || null,
+            userAgent: event.correlation.userAgent || null,
+          });
+        } catch (err) {
+          this.logger.error(
+            `Failed to log ${OrganizationSettingsUpdatedEvent.EVENT_NAME}`,
+            err,
+          );
+        }
+      });
 
     this.eventBus.ofType(SlugChangedEvent).subscribe(async (event) => {
       try {
         await this.auditLogRepository.create({
           userId: event.correlation.userId || null,
           action: SlugChangedEvent.EVENT_NAME,
-          entityName: 'organization',
+          entityName: "organization",
           entityId: event.payload.id,
           details: { old: event.payload.oldSlug, new: event.payload.newSlug },
           ipAddress: event.correlation.ipAddress || null,
@@ -97,7 +115,7 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.userId,
           action: MemberJoinedEvent.EVENT_NAME,
-          entityName: 'member',
+          entityName: "member",
           entityId: event.payload.organizationId,
           details: { role: event.payload.role },
           ipAddress: event.correlation.ipAddress || null,
@@ -113,14 +131,17 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.correlation.userId || null,
           action: InvitationAcceptedEvent.EVENT_NAME,
-          entityName: 'invitation',
+          entityName: "invitation",
           entityId: event.payload.invitationId,
           details: { email: event.payload.email, role: event.payload.role },
           ipAddress: event.correlation.ipAddress || null,
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${InvitationAcceptedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${InvitationAcceptedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -129,14 +150,17 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.revokedByUserId,
           action: InvitationRevokedEvent.EVENT_NAME,
-          entityName: 'invitation',
+          entityName: "invitation",
           entityId: event.payload.invitationId,
           details: { revokedBy: event.payload.revokedByUserId },
           ipAddress: event.correlation.ipAddress || null,
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${InvitationRevokedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${InvitationRevokedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -145,7 +169,7 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.actorUserId,
           action: MemberRoleChangedEvent.EVENT_NAME,
-          entityName: 'member',
+          entityName: "member",
           entityId: event.payload.memberId,
           details: {
             userId: event.payload.userId,
@@ -157,7 +181,10 @@ export class AuditLogListener implements OnModuleInit {
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${MemberRoleChangedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${MemberRoleChangedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -166,7 +193,7 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.actorUserId,
           action: MemberRemovedEvent.EVENT_NAME,
-          entityName: 'member',
+          entityName: "member",
           entityId: event.payload.memberId,
           details: {
             userId: event.payload.userId,
@@ -176,7 +203,10 @@ export class AuditLogListener implements OnModuleInit {
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${MemberRemovedEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${MemberRemovedEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -185,7 +215,7 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.actorUserId,
           action: OwnershipTransferredEvent.EVENT_NAME,
-          entityName: 'organization',
+          entityName: "organization",
           entityId: event.payload.organizationId,
           details: {
             fromUserId: event.payload.fromUserId,
@@ -196,7 +226,10 @@ export class AuditLogListener implements OnModuleInit {
           userAgent: event.correlation.userAgent || null,
         });
       } catch (err) {
-        this.logger.error(`Failed to log ${OwnershipTransferredEvent.EVENT_NAME}`, err);
+        this.logger.error(
+          `Failed to log ${OwnershipTransferredEvent.EVENT_NAME}`,
+          err,
+        );
       }
     });
 
@@ -205,7 +238,7 @@ export class AuditLogListener implements OnModuleInit {
         await this.auditLogRepository.create({
           userId: event.payload.userId,
           action: MemberLeftEvent.EVENT_NAME,
-          entityName: 'member',
+          entityName: "member",
           entityId: event.payload.memberId,
           details: { organizationId: event.payload.organizationId },
           ipAddress: event.correlation.ipAddress || null,

@@ -9,9 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0-beta1] - 2026-07-27
+
+### Added
+
+- **Agent Execution Runtime (AGENT-003)**: Built multi-layered execution engine with isolated runtime, tool loop controllers, and modular AI provider connectors.
+- **Execution Persistence & Tracing**: Persisted detailed execution logs (status, input, output, tokens, latency, cost metrics).
+- **Event-Driven Telemetry**: Dispatched domain events (`ExecutionStartedEvent`, `ToolInvokedEvent`, `ToolCompletedEvent`, `ExecutionCompletedEvent`, `ExecutionFailedEvent`) to listener buses.
+- **SSE Stream Endpoints**: Real-time token streaming using Server-Sent Events with structured metadata tracing.
+- **Comprehensive Integration Tests**: Added test matrix for provider failures, tool loops, timeouts, and SSE stream sequences.
+
+### Improved
+
+- **Swagger Documentation**: Detailed execute/stream DTO parameters, event sequence payload formats, and error codes.
+- **System Architecture Diagrams**: Added Mermaid maps for runtime hierarchy, execution runtime flows, and agent configuration ER diagrams.
+- **README**: Updated project overview and module status matrices.
+
+---
+
 ## [0.4.0] - 2026-07-25
 
 ### Added
+
 - **Agent Registry (AGENT-001)**: Developed Agent model and Version schemas, optimistic locking `revision` tracking, lifecycle `AgentStatus` states (`DRAFT`, `ACTIVE`, `DISABLED`, `ARCHIVED`), and REST admin endpoints.
 - **Tool Framework (AGENT-002)**: Built a modular execution framework using `ToolDefinition` interfaces, central `ToolRegistry`, dynamic `ToolResolver` engines, and AJV schema-validated `ToolExecutor` layers.
 - **Built-in Agent Tools**: Implemented sandbox-compliant tools for calculations (`CalculatorTool`), time retrieval (`DateTimeTool`), cryptographic UUIDs (`UuidGeneratorTool`), JSON formatter/minifier (`JsonUtilsTool`), string operations (`TextUtilsTool`), and whitelisted HTTP querying (`HttpClientTool`).
@@ -24,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-07-22
 
 ### Added
+
 - **AI Infrastructure (AI-000)**: Formulated workspace-wide configuration mappings for NestJS backend modules and external dependencies.
 - **Provider Management (AI-001)**: Developed `AiProviderFactory` supporting multi-provider configurations (OpenAI, Anthropic, Gemini, local models) with secure credentials encryption.
 - **Prompt Library (AI-002)**: Integrated prompt templates with variable rendering engines and database history versioning.
@@ -36,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2026-07-21
 
 ### Added
+
 - **Permission Matrix (RBAC-001)**: Decoupled authorization from hardcoded role checks to fine-grained permission evaluation (`@RequirePermissions`, `@RequireAnyPermission`, `PermissionGuard`).
 - **Pre-computed Role Matrix**: Pre-computed `ALL_PERMISSIONS` and wildcard `WILDCARD_PERMISSION = '*'` expansion to optimize evaluation speed per request.
 - **Pure Resource Policy Engine (RBAC-002)**: Framework-independent `MemberPolicy`, `InvitationPolicy`, and `OrganizationPolicy` returning pure `PolicyResult` objects `{ allowed: boolean, reason?: string, code?: PolicyErrorCode }`.
@@ -52,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-07-17
 
 ### Added
+
 - **Monorepo Architecture**: Setup workspaces using `pnpm` and Turborepo configurations.
 - **NestJS & Next.js Skeletons**: API and web application scaffolds with TypeScript and shared ESLint configs.
 - **Dockerized Environment**: Orchestration for PostgreSQL and Redis services.

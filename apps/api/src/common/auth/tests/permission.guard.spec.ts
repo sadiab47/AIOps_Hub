@@ -1,11 +1,15 @@
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PermissionGuard } from '../permission.guard';
-import { AuthorizationService } from '../authorization.service';
-import { Permissions, WILDCARD_PERMISSION } from '../../constants/permissions';
-import { PERMISSIONS_KEY, PERMISSIONS_MODE_KEY, PermissionMode } from '../require-permissions.decorator';
+import { ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { PermissionGuard } from "../permission.guard";
+import { AuthorizationService } from "../authorization.service";
+import { Permissions, WILDCARD_PERMISSION } from "../../constants/permissions";
+import {
+  PERMISSIONS_KEY,
+  PERMISSIONS_MODE_KEY,
+  PermissionMode,
+} from "../require-permissions.decorator";
 
-describe('PermissionGuard (RBAC-001)', () => {
+describe("PermissionGuard (RBAC-001)", () => {
   let guard: PermissionGuard;
   let reflector: jest.Mocked<Reflector>;
   let authService: AuthorizationService;
@@ -30,13 +34,13 @@ describe('PermissionGuard (RBAC-001)', () => {
     } as unknown as ExecutionContext;
   };
 
-  it('allows access when route requires no permissions', () => {
+  it("allows access when route requires no permissions", () => {
     reflector.getAllAndOverride.mockReturnValue(undefined);
     const mockContext = createMockContext();
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('allows access when user possesses WILDCARD_PERMISSION', () => {
+  it("allows access when user possesses WILDCARD_PERMISSION", () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
       if (key === PERMISSIONS_KEY) return [Permissions.member.remove];
       if (key === PERMISSIONS_MODE_KEY) return PermissionMode.ALL;
@@ -47,18 +51,21 @@ describe('PermissionGuard (RBAC-001)', () => {
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('allows access when user has required permissions in ALL mode', () => {
+  it("allows access when user has required permissions in ALL mode", () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
       if (key === PERMISSIONS_KEY) return [Permissions.member.list];
       if (key === PERMISSIONS_MODE_KEY) return PermissionMode.ALL;
       return undefined;
     });
 
-    const mockContext = createMockContext([Permissions.member.list, Permissions.member.view]);
+    const mockContext = createMockContext([
+      Permissions.member.list,
+      Permissions.member.view,
+    ]);
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('throws ForbiddenException when user lacks required permission', () => {
+  it("throws ForbiddenException when user lacks required permission", () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
       if (key === PERMISSIONS_KEY) return [Permissions.member.remove];
       if (key === PERMISSIONS_MODE_KEY) return PermissionMode.ALL;
@@ -69,9 +76,10 @@ describe('PermissionGuard (RBAC-001)', () => {
     expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
   });
 
-  it('allows access in ANY mode when user possesses at least one matching permission', () => {
+  it("allows access in ANY mode when user possesses at least one matching permission", () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
-      if (key === PERMISSIONS_KEY) return [Permissions.member.remove, Permissions.organization.view];
+      if (key === PERMISSIONS_KEY)
+        return [Permissions.member.remove, Permissions.organization.view];
       if (key === PERMISSIONS_MODE_KEY) return PermissionMode.ANY;
       return undefined;
     });
@@ -80,7 +88,7 @@ describe('PermissionGuard (RBAC-001)', () => {
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('throws ForbiddenException when request has no tenant context', () => {
+  it("throws ForbiddenException when request has no tenant context", () => {
     reflector.getAllAndOverride.mockReturnValue([Permissions.member.list]);
     const mockContext = createMockContext(undefined);
     expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);

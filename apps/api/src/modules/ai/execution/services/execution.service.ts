@@ -1,14 +1,18 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PrismaService } from '../../../../common/database/prisma.service';
-import { ExecutionRepository } from '../repositories/execution.repository';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { PrismaService } from "../../../../common/database/prisma.service";
+import { ExecutionRepository } from "../repositories/execution.repository";
 import {
   ExecutionStartedEvent,
   ExecutionCompletedEvent,
   ExecutionFailedEvent,
-} from '../events/execution.events';
+} from "../events/execution.events";
 
-import { AgentExecution, Agent, AgentVersion } from '@aiops-hub/db';
+import { AgentExecution, Agent, AgentVersion } from "@aiops-hub/db";
 
 @Injectable()
 export class ExecutionService {
@@ -24,12 +28,20 @@ export class ExecutionService {
     userId: string;
     input: any;
     requestId: string;
-  }): Promise<{ execution: AgentExecution; agent: Agent; version: AgentVersion & { providerConfig: { provider: string } } }> {
+  }): Promise<{
+    execution: AgentExecution;
+    agent: Agent;
+    version: AgentVersion & { providerConfig: { provider: string } };
+  }> {
     const agent = await this.prisma.agent.findFirst({
-      where: { id: params.agentId, organizationId: params.organizationId, deletedAt: null },
+      where: {
+        id: params.agentId,
+        organizationId: params.organizationId,
+        deletedAt: null,
+      },
       include: {
         versions: {
-          orderBy: { version: 'desc' },
+          orderBy: { version: "desc" },
           take: 1,
           include: {
             providerConfig: true,
@@ -39,12 +51,12 @@ export class ExecutionService {
     });
 
     if (!agent) {
-      throw new NotFoundException('Agent not found or unauthorized');
+      throw new NotFoundException("Agent not found or unauthorized");
     }
 
     const version = agent.versions[0];
     if (!version) {
-      throw new NotFoundException('Agent has no active versions');
+      throw new NotFoundException("Agent has no active versions");
     }
 
     const executionId = crypto.randomUUID();
@@ -59,12 +71,17 @@ export class ExecutionService {
       userId: params.userId,
       input: params.input,
       requestId: params.requestId,
-      status: 'PENDING',
+      status: "PENDING",
     });
 
     this.eventEmitter.emit(
-      'execution.started',
-      new ExecutionStartedEvent(executionId, params.organizationId, agent.id, params.input),
+      "execution.started",
+      new ExecutionStartedEvent(
+        executionId,
+        params.organizationId,
+        agent.id,
+        params.input,
+      ),
     );
 
     return { execution, agent, version };
@@ -75,10 +92,16 @@ export class ExecutionService {
     organizationId: string,
     agentId: string,
     output: any,
-    metrics: { promptTokens: number; completionTokens: number; latencyMs: number; cost: number; toolsInvoked?: any },
+    metrics: {
+      promptTokens: number;
+      completionTokens: number;
+      latencyMs: number;
+      cost: number;
+      toolsInvoked?: any;
+    },
   ): Promise<AgentExecution> {
     const updated = await this.repository.update(id, {
-      status: 'COMPLETED',
+      status: "COMPLETED",
       output,
       completedAt: new Date(),
       latencyMs: metrics.latencyMs,
@@ -89,7 +112,7 @@ export class ExecutionService {
     });
 
     this.eventEmitter.emit(
-      'execution.completed',
+      "execution.completed",
       new ExecutionCompletedEvent(id, organizationId, agentId, output, metrics),
     );
 
@@ -101,10 +124,14 @@ export class ExecutionService {
     organizationId: string,
     agentId: string,
     error: string,
-    metrics?: { promptTokens: number; completionTokens: number; latencyMs: number },
+    metrics?: {
+      promptTokens: number;
+      completionTokens: number;
+      latencyMs: number;
+    },
   ): Promise<AgentExecution> {
     const updated = await this.repository.update(id, {
-      status: 'FAILED',
+      status: "FAILED",
       errorMessage: error,
       completedAt: new Date(),
       latencyMs: metrics?.latencyMs,
@@ -113,7 +140,7 @@ export class ExecutionService {
     });
 
     this.eventEmitter.emit(
-      'execution.failed',
+      "execution.failed",
       new ExecutionFailedEvent(id, organizationId, agentId, error, metrics),
     );
 

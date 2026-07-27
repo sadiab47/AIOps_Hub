@@ -1,7 +1,7 @@
-import { OrgRole } from '@aiops-hub/db';
-import { RequestContext } from '../../auth/request-context.interface';
-import { MemberResource } from '../types/member-resource.interface';
-import { PolicyResult, allow, deny } from '../types/policy-result.interface';
+import { OrgRole } from "@aiops-hub/db";
+import { RequestContext } from "../../auth/request-context.interface";
+import { MemberResource } from "../types/member-resource.interface";
+import { PolicyResult, allow, deny } from "../types/policy-result.interface";
 
 export class MemberPolicy {
   /**
@@ -13,14 +13,17 @@ export class MemberPolicy {
     targetMember?: MemberResource | null,
     newRole?: OrgRole,
   ): PolicyResult {
-    if (!targetMember || targetMember.organizationId !== actorCtx.organizationId) {
-      return deny('Member not found', 'NOT_FOUND');
+    if (
+      !targetMember ||
+      targetMember.organizationId !== actorCtx.organizationId
+    ) {
+      return deny("Member not found", "NOT_FOUND");
     }
 
     if (targetMember.userId === actorCtx.userId) {
       return deny(
-        'You cannot modify your own membership. Use /leave to leave or transfer ownership.',
-        'SELF_ACTION',
+        "You cannot modify your own membership. Use /leave to leave or transfer ownership.",
+        "SELF_ACTION",
       );
     }
 
@@ -28,15 +31,27 @@ export class MemberPolicy {
     const targetRole = targetMember.role;
 
     if (targetRole === OrgRole.OWNER && actorRole !== OrgRole.OWNER) {
-      return deny('Only an organization OWNER can modify another OWNER', 'ROLE_HIERARCHY_VIOLATION');
+      return deny(
+        "Only an organization OWNER can modify another OWNER",
+        "ROLE_HIERARCHY_VIOLATION",
+      );
     }
 
-    if (actorRole === OrgRole.ADMIN && (targetRole === OrgRole.ADMIN || targetRole === OrgRole.OWNER)) {
-      return deny('ADMINs cannot modify other ADMINs or the OWNER', 'ROLE_HIERARCHY_VIOLATION');
+    if (
+      actorRole === OrgRole.ADMIN &&
+      (targetRole === OrgRole.ADMIN || targetRole === OrgRole.OWNER)
+    ) {
+      return deny(
+        "ADMINs cannot modify other ADMINs or the OWNER",
+        "ROLE_HIERARCHY_VIOLATION",
+      );
     }
 
     if (newRole && newRole === OrgRole.OWNER) {
-      return deny('Use the transfer-owner endpoint to assign the OWNER role', 'INVALID_ROLE');
+      return deny(
+        "Use the transfer-owner endpoint to assign the OWNER role",
+        "INVALID_ROLE",
+      );
     }
 
     return allow();
@@ -51,15 +66,24 @@ export class MemberPolicy {
     targetMember?: MemberResource | null,
   ): PolicyResult {
     if (actorCtx.organizationRole !== OrgRole.OWNER) {
-      return deny('Only the current OWNER can transfer organization ownership', 'ROLE_HIERARCHY_VIOLATION');
+      return deny(
+        "Only the current OWNER can transfer organization ownership",
+        "ROLE_HIERARCHY_VIOLATION",
+      );
     }
 
-    if (!targetMember || targetMember.organizationId !== actorCtx.organizationId) {
-      return deny('Target member not found', 'NOT_FOUND');
+    if (
+      !targetMember ||
+      targetMember.organizationId !== actorCtx.organizationId
+    ) {
+      return deny("Target member not found", "NOT_FOUND");
     }
 
     if (targetMember.userId === actorCtx.userId) {
-      return deny('You are already the OWNER of this organization', 'SELF_ACTION');
+      return deny(
+        "You are already the OWNER of this organization",
+        "SELF_ACTION",
+      );
     }
 
     return allow();

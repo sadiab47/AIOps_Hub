@@ -1,6 +1,11 @@
-import { Organization, Prisma, Member, OrganizationSettings } from '@aiops-hub/db';
+import {
+  Organization,
+  Prisma,
+  Member,
+  OrganizationSettings,
+} from "@aiops-hub/db";
 
-export const ORGANIZATION_REPOSITORY_TOKEN = 'OrganizationRepositoryInterface';
+export const ORGANIZATION_REPOSITORY_TOKEN = "OrganizationRepositoryInterface";
 
 export interface AuditEvent {
   action: string;
@@ -19,8 +24,13 @@ export interface OrganizationRepositoryInterface {
   existsBySlug(slug: string): Promise<boolean>;
   existsBySlugExcept(slug: string, orgId: string): Promise<boolean>;
   findById(id: string): Promise<Organization | null>;
-  findUserOrganizations(userId: string): Promise<(Organization & { role: string })[]>;
-  findOrganizationContext(userId: string, orgId: string): Promise<{
+  findUserOrganizations(
+    userId: string,
+  ): Promise<(Organization & { role: string })[]>;
+  findOrganizationContext(
+    userId: string,
+    orgId: string,
+  ): Promise<{
     organization: Organization;
     membership: Member;
     settings: OrganizationSettings | null;

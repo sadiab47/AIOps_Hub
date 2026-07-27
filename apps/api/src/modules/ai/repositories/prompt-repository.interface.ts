@@ -1,6 +1,6 @@
-import { Prompt, PromptVersion, PromptVisibility, Prisma } from '@aiops-hub/db';
+import { Prompt, PromptVersion, PromptVisibility, Prisma } from "@aiops-hub/db";
 
-export const PROMPT_REPOSITORY_TOKEN = Symbol('PROMPT_REPOSITORY_TOKEN');
+export const PROMPT_REPOSITORY_TOKEN = Symbol("PROMPT_REPOSITORY_TOKEN");
 
 export interface PromptRepositoryInterface {
   create(

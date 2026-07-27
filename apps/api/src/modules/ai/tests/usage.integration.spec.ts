@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, VersioningType } from '@nestjs/common';
-import request from 'supertest';
-import cookieParser from 'cookie-parser';
-import { AppModule } from '../../../app.module';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { ResponseEnvelopeInterceptor } from '../../../common/interceptors/response-envelope.interceptor';
-import { GlobalHttpExceptionFilter } from '../../../common/filters/http-exception.filter';
-import { AiProvider, AiRequestStatus } from '@aiops-hub/db';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, VersioningType } from "@nestjs/common";
+import request from "supertest";
+import cookieParser from "cookie-parser";
+import { AppModule } from "../../../app.module";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { ResponseEnvelopeInterceptor } from "../../../common/interceptors/response-envelope.interceptor";
+import { GlobalHttpExceptionFilter } from "../../../common/filters/http-exception.filter";
+import { AiProvider, AiRequestStatus } from "@aiops-hub/db";
 
 jest.setTimeout(45000);
 
-describe('AI Usage Analytics Integration Tests (AI-005)', () => {
+describe("AI Usage Analytics Integration Tests (AI-005)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let ownerEmail: string;
@@ -26,8 +26,8 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
-    app.setGlobalPrefix('api');
-    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+    app.setGlobalPrefix("api");
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: "1" });
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
     app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
@@ -38,18 +38,24 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
 
     // 1. Register Owner
     const regRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: ownerEmail, password: 'Password123!', name: 'Usage Owner' })
+      .post("/api/v1/auth/register")
+      .send({
+        email: ownerEmail,
+        password: "Password123!",
+        name: "Usage Owner",
+      })
       .expect(201);
-    ownerCookies = regRes.headers['set-cookie'] as unknown as string[];
-    const owner = await prisma.user.findUnique({ where: { email: ownerEmail } });
+    ownerCookies = regRes.headers["set-cookie"] as unknown as string[];
+    const owner = await prisma.user.findUnique({
+      where: { email: ownerEmail },
+    });
     ownerUserId = owner!.id;
 
     // 2. Create Organization
     const orgRes = await request(app.getHttpServer())
-      .post('/api/v1/organizations')
-      .set('Cookie', ownerCookies)
-      .send({ name: 'Usage Test Org' })
+      .post("/api/v1/organizations")
+      .set("Cookie", ownerCookies)
+      .send({ name: "Usage Test Org" })
       .expect(201);
     orgId = orgRes.body.data.id;
 
@@ -58,8 +64,8 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
       data: {
         organizationId: orgId,
         provider: AiProvider.OPENAI,
-        name: 'Usage Config',
-        encryptedCredentials: 'enc',
+        name: "Usage Config",
+        encryptedCredentials: "enc",
       },
     });
     providerConfigId = provRes.id;
@@ -68,11 +74,11 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
     await prisma.aiUsageLog.createMany({
       data: [
         {
-          requestId: 'e01ce16a-7ad2-4a0f-acb2-ca21d01ab001',
+          requestId: "e01ce16a-7ad2-4a0f-acb2-ca21d01ab001",
           organizationId: orgId,
           providerConfigId,
           provider: AiProvider.OPENAI,
-          model: 'gpt-4o',
+          model: "gpt-4o",
           promptTokens: 1000,
           completionTokens: 500,
           totalTokens: 1500,
@@ -82,11 +88,11 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
           createdAt: new Date(),
         },
         {
-          requestId: 'e01ce16a-7ad2-4a0f-acb2-ca21d01ab002',
+          requestId: "e01ce16a-7ad2-4a0f-acb2-ca21d01ab002",
           organizationId: orgId,
           providerConfigId,
           provider: AiProvider.OPENAI,
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           promptTokens: 500,
           completionTokens: 200,
           totalTokens: 700,
@@ -102,7 +108,9 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
   afterAll(async () => {
     if (prisma && orgId) {
       await prisma.aiUsageLog.deleteMany({ where: { organizationId: orgId } });
-      await prisma.aiProviderConfig.deleteMany({ where: { organizationId: orgId } });
+      await prisma.aiProviderConfig.deleteMany({
+        where: { organizationId: orgId },
+      });
       await prisma.member.deleteMany({ where: { organizationId: orgId } });
       await prisma.auditLog.deleteMany({ where: { entityId: orgId } });
       await prisma.refreshToken.deleteMany({ where: { userId: ownerUserId } });
@@ -114,23 +122,23 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
     }
   });
 
-  describe('REST Usage Analytics Endpoints', () => {
-    it('should retrieve overall telemetry summary logs count', async () => {
+  describe("REST Usage Analytics Endpoints", () => {
+    it("should retrieve overall telemetry summary logs count", async () => {
       const res = await request(app.getHttpServer())
-        .get('/api/v1/ai/usage')
-        .set('Cookie', ownerCookies)
-        .set('x-organization-id', orgId)
+        .get("/api/v1/ai/usage")
+        .set("Cookie", ownerCookies)
+        .set("x-organization-id", orgId)
         .expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(2);
     });
 
-    it('should aggregate metrics correctly in summary endpoint', async () => {
+    it("should aggregate metrics correctly in summary endpoint", async () => {
       const res = await request(app.getHttpServer())
-        .get('/api/v1/ai/usage/summary')
-        .set('Cookie', ownerCookies)
-        .set('x-organization-id', orgId)
+        .get("/api/v1/ai/usage/summary")
+        .set("Cookie", ownerCookies)
+        .set("x-organization-id", orgId)
         .expect(200);
 
       expect(res.body.success).toBe(true);
@@ -139,16 +147,18 @@ describe('AI Usage Analytics Integration Tests (AI-005)', () => {
       expect(res.body.data.estimatedCostUsd).toBeCloseTo(0.012695, 6);
     });
 
-    it('should aggregate metrics grouped by models', async () => {
+    it("should aggregate metrics grouped by models", async () => {
       const res = await request(app.getHttpServer())
-        .get('/api/v1/ai/usage/models')
-        .set('Cookie', ownerCookies)
-        .set('x-organization-id', orgId)
+        .get("/api/v1/ai/usage/models")
+        .set("Cookie", ownerCookies)
+        .set("x-organization-id", orgId)
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.some((d: any) => d.group === 'gpt-4o')).toBe(true);
-      expect(res.body.data.some((d: any) => d.group === 'gpt-4o-mini')).toBe(true);
+      expect(res.body.data.some((d: any) => d.group === "gpt-4o")).toBe(true);
+      expect(res.body.data.some((d: any) => d.group === "gpt-4o-mini")).toBe(
+        true,
+      );
     });
   });
 });

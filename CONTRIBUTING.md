@@ -27,10 +27,10 @@ Thank you for contributing to AIOps Hub! To maintain a world-class standard, ple
 - **Strict TypeScript**: We use strict compiler flags. Ensure your code passes all type checks before pushing (`pnpm typecheck`).
 - **Clean Architecture**: Follow the modular monolith rules. Business logic must live inside modules, and application services should call repositories instead of interacting with Prisma directly.
 - **Linting & Formatting**: Format code with Prettier and run Lint checks before committing:
-   ```bash
-   pnpm lint
-   pnpm format
-   ```
+  ```bash
+  pnpm lint
+  pnpm format
+  ```
 
 ## Git Workflow
 
@@ -54,6 +54,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ```
 
 **Common Types**:
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes

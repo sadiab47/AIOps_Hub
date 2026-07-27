@@ -1,9 +1,9 @@
-import { DomainEvent, EventCorrelationContext } from '../domain-event';
+import { DomainEvent, EventCorrelationContext } from "../domain-event";
 
-export const EVENT_NAME_PROMPT_CREATED = 'prompt.created';
-export const EVENT_NAME_PROMPT_UPDATED = 'prompt.updated';
-export const EVENT_NAME_PROMPT_VERSION_CREATED = 'prompt.version_created';
-export const EVENT_NAME_PROMPT_DELETED = 'prompt.deleted';
+export const EVENT_NAME_PROMPT_CREATED = "prompt.created";
+export const EVENT_NAME_PROMPT_UPDATED = "prompt.updated";
+export const EVENT_NAME_PROMPT_VERSION_CREATED = "prompt.version_created";
+export const EVENT_NAME_PROMPT_DELETED = "prompt.deleted";
 
 export class PromptCreatedEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_PROMPT_CREATED;

@@ -1,7 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
-import * as crypto from 'crypto';
-import { REFRESH_TOKEN_REPOSITORY_TOKEN, RefreshTokenRepositoryInterface } from '../repositories/refresh-token-repository.interface';
-import { TokenService } from '../../../common/auth/token.service';
+import { Injectable, Inject } from "@nestjs/common";
+import * as crypto from "crypto";
+import {
+  REFRESH_TOKEN_REPOSITORY_TOKEN,
+  RefreshTokenRepositoryInterface,
+} from "../repositories/refresh-token-repository.interface";
+import { TokenService } from "../../../common/auth/token.service";
 
 @Injectable()
 export class SessionService {
@@ -18,14 +21,17 @@ export class SessionService {
     userAgent: string | null,
   ) {
     const sessionId = crypto.randomUUID();
-    
+
     const payload = { sub: userId, email, sessionId };
     const [accessToken, refreshToken] = await Promise.all([
       this.tokenService.generateAccess(payload),
       this.tokenService.generateRefresh(payload),
     ]);
 
-    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30 days matching JWT expiration
 
@@ -49,8 +55,14 @@ export class SessionService {
     return this.refreshTokenRepository.revoke(sessionId, reason);
   }
 
-  async rotateSession(sessionId: string, newRefreshToken: string): Promise<void> {
-    const tokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+  async rotateSession(
+    sessionId: string,
+    newRefreshToken: string,
+  ): Promise<void> {
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(newRefreshToken)
+      .digest("hex");
     await this.refreshTokenRepository.updateTokenHash(sessionId, tokenHash);
   }
 

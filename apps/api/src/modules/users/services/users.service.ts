@@ -1,7 +1,15 @@
-import { Injectable, Inject, ConflictException, UnauthorizedException } from '@nestjs/common';
-import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../repositories/user-repository.interface';
-import { User, Prisma } from '@aiops-hub/db';
-import { CurrentUserResponseDto } from '../dto/current-user-response.dto';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import {
+  USER_REPOSITORY_TOKEN,
+  UserRepositoryInterface,
+} from "../repositories/user-repository.interface";
+import { User, Prisma } from "@aiops-hub/db";
+import { CurrentUserResponseDto } from "../dto/current-user-response.dto";
 
 @Injectable()
 export class UsersService {
@@ -13,7 +21,7 @@ export class UsersService {
   async create(data: Prisma.UserCreateInput): Promise<User> {
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
-      throw new ConflictException('Email is already registered');
+      throw new ConflictException("Email is already registered");
     }
     return this.userRepository.create(data);
   }
@@ -30,7 +38,7 @@ export class UsersService {
     const user = await this.userRepository.findById(userId);
 
     if (!user || !user.isActive || user.lockedAt) {
-      throw new UnauthorizedException('Invalid session');
+      throw new UnauthorizedException("Invalid session");
     }
 
     return {

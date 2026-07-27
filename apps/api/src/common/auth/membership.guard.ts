@@ -1,5 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable, ForbiddenException, Inject } from '@nestjs/common';
-import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../../modules/organizations/repositories/member-repository.interface';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+  Inject,
+} from "@nestjs/common";
+import {
+  MEMBER_REPOSITORY_TOKEN,
+  MemberRepositoryInterface,
+} from "../../modules/organizations/repositories/member-repository.interface";
 
 @Injectable()
 export class MembershipGuard implements CanActivate {
@@ -13,7 +22,7 @@ export class MembershipGuard implements CanActivate {
     const requestContext = request.context;
 
     if (!requestContext?.userId || !requestContext?.organizationId) {
-      throw new ForbiddenException('User session or tenant context is missing');
+      throw new ForbiddenException("User session or tenant context is missing");
     }
 
     if (requestContext.organizationRole) {
@@ -26,7 +35,9 @@ export class MembershipGuard implements CanActivate {
     );
 
     if (!membership) {
-      throw new ForbiddenException('You do not have access to this organization');
+      throw new ForbiddenException(
+        "You do not have access to this organization",
+      );
     }
 
     request.context = {

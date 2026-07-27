@@ -1,7 +1,17 @@
-import { CanActivate, ExecutionContext, Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { OrgRole } from '@aiops-hub/db';
-import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../../modules/organizations/repositories/organization-repository.interface';
-import { AuthorizationService } from './authorization.service';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+} from "@nestjs/common";
+import { OrgRole } from "@aiops-hub/db";
+import {
+  ORGANIZATION_REPOSITORY_TOKEN,
+  OrganizationRepositoryInterface,
+} from "../../modules/organizations/repositories/organization-repository.interface";
+import { AuthorizationService } from "./authorization.service";
 
 @Injectable()
 export class TenantContextGuard implements CanActivate {
@@ -13,15 +23,18 @@ export class TenantContextGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const organizationId = request.headers['x-organization-id'];
+    const organizationId = request.headers["x-organization-id"];
 
     if (!organizationId) {
-      throw new BadRequestException('Organization ID header (x-organization-id) is missing');
+      throw new BadRequestException(
+        "Organization ID header (x-organization-id) is missing",
+      );
     }
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (typeof organizationId !== 'string' || !uuidRegex.test(organizationId)) {
-      throw new BadRequestException('Invalid Organization ID format');
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof organizationId !== "string" || !uuidRegex.test(organizationId)) {
+      throw new BadRequestException("Invalid Organization ID format");
     }
 
     const userId = request.context?.userId;
@@ -30,7 +43,11 @@ export class TenantContextGuard implements CanActivate {
     let settings = null;
 
     if (userId) {
-      const contextResult = await this.organizationRepository.findOrganizationContext(userId, organizationId);
+      const contextResult =
+        await this.organizationRepository.findOrganizationContext(
+          userId,
+          organizationId,
+        );
       if (contextResult) {
         organization = contextResult.organization;
         membership = contextResult.membership;
@@ -38,20 +55,22 @@ export class TenantContextGuard implements CanActivate {
       } else {
         const org = await this.organizationRepository.findById(organizationId);
         if (!org) {
-          throw new NotFoundException('Organization not found');
+          throw new NotFoundException("Organization not found");
         }
         organization = org;
       }
     } else {
       const org = await this.organizationRepository.findById(organizationId);
       if (!org) {
-        throw new NotFoundException('Organization not found');
+        throw new NotFoundException("Organization not found");
       }
       organization = org;
     }
 
     const permissions = membership?.role
-      ? this.authorizationService.getPermissionsForRole(membership.role as OrgRole)
+      ? this.authorizationService.getPermissionsForRole(
+          membership.role as OrgRole,
+        )
       : [];
 
     request.context = {
@@ -60,14 +79,15 @@ export class TenantContextGuard implements CanActivate {
       organizationName: organization.name,
       organizationSlug: organization.slug,
       organizationRole: membership?.role,
-      organizationSettings: settings ? {
-        timezone: settings.timezone,
-        locale: settings.locale,
-      } : null,
+      organizationSettings: settings
+        ? {
+            timezone: settings.timezone,
+            locale: settings.locale,
+          }
+        : null,
       permissions,
     };
 
     return true;
   }
 }
-

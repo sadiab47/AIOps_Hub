@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../common/database/prisma.service';
-import { AgentExecution } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../../common/database/prisma.service";
+import { AgentExecution } from "@aiops-hub/db";
 
 @Injectable()
 export class ExecutionRepository {
@@ -16,7 +16,7 @@ export class ExecutionRepository {
     userId: string;
     input: any;
     requestId: string;
-    status: 'PENDING' | 'RUNNING';
+    status: "PENDING" | "RUNNING";
   }): Promise<AgentExecution> {
     return this.prisma.agentExecution.create({
       data: {
@@ -37,7 +37,7 @@ export class ExecutionRepository {
   async update(
     id: string,
     data: {
-      status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'TIMEOUT';
+      status: "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | "TIMEOUT";
       output?: any;
       completedAt?: Date;
       cancelledAt?: Date;
@@ -55,7 +55,10 @@ export class ExecutionRepository {
     });
   }
 
-  async findById(id: string, organizationId: string): Promise<AgentExecution | null> {
+  async findById(
+    id: string,
+    organizationId: string,
+  ): Promise<AgentExecution | null> {
     return this.prisma.agentExecution.findFirst({
       where: { id, organizationId },
     });

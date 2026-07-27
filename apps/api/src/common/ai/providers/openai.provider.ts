@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 import {
   AiProvider,
   ProviderCapabilities,
@@ -9,12 +9,12 @@ import {
   EmbeddingRequest,
   EmbeddingResponse,
   TokenUsage,
-} from '../types/ai-provider.interface';
+} from "../types/ai-provider.interface";
 
 @Injectable()
 export class OpenAiProvider implements AiProvider {
   private readonly logger = new Logger(OpenAiProvider.name);
-  readonly providerId = 'OPENAI';
+  readonly providerId = "OPENAI";
 
   readonly capabilities: ProviderCapabilities = {
     streaming: true,
@@ -24,15 +24,19 @@ export class OpenAiProvider implements AiProvider {
     jsonMode: true,
   };
 
-  async validateCredentials(credentials: DecryptedCredentials): Promise<ValidationResult> {
-    const baseUrl = credentials.endpoint || 'https://api.openai.com/v1';
+  async validateCredentials(
+    credentials: DecryptedCredentials,
+  ): Promise<ValidationResult> {
+    const baseUrl = credentials.endpoint || "https://api.openai.com/v1";
 
     try {
       const response = await fetch(`${baseUrl}/models`, {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${credentials.apiKey}`,
-          ...(credentials.organizationId && { 'OpenAI-Organization': credentials.organizationId }),
+          ...(credentials.organizationId && {
+            "OpenAI-Organization": credentials.organizationId,
+          }),
         },
       });
 
@@ -41,7 +45,9 @@ export class OpenAiProvider implements AiProvider {
         return {
           valid: false,
           models: [],
-          error: errorData?.error?.message || `Validation failed with HTTP status ${response.status}`,
+          error:
+            errorData?.error?.message ||
+            `Validation failed with HTTP status ${response.status}`,
         };
       }
 
@@ -67,12 +73,12 @@ export class OpenAiProvider implements AiProvider {
     credentials: DecryptedCredentials,
   ): Promise<ChatCompletionResponse> {
     const startTime = Date.now();
-    const baseUrl = credentials.endpoint || 'https://api.openai.com/v1';
+    const baseUrl = credentials.endpoint || "https://api.openai.com/v1";
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${credentials.apiKey}`,
       },
       body: JSON.stringify({
@@ -87,7 +93,10 @@ export class OpenAiProvider implements AiProvider {
 
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as any;
-      throw new Error(errorData?.error?.message || `OpenAI request failed with status ${response.status}`);
+      throw new Error(
+        errorData?.error?.message ||
+          `OpenAI request failed with status ${response.status}`,
+      );
     }
 
     const data = (await response.json()) as any;
@@ -96,12 +105,16 @@ export class OpenAiProvider implements AiProvider {
       promptTokens: data.usage?.prompt_tokens ?? 0,
       completionTokens: data.usage?.completion_tokens ?? 0,
       totalTokens: data.usage?.total_tokens ?? 0,
-      estimatedCostUsd: this.calculateEstimatedCost(req.model, data.usage?.prompt_tokens, data.usage?.completion_tokens),
+      estimatedCostUsd: this.calculateEstimatedCost(
+        req.model,
+        data.usage?.prompt_tokens,
+        data.usage?.completion_tokens,
+      ),
       latencyMs,
     };
 
     return {
-      content: choice?.message?.content || '',
+      content: choice?.message?.content || "",
       finishReason: choice?.finish_reason,
       usage,
     };
@@ -112,12 +125,12 @@ export class OpenAiProvider implements AiProvider {
     credentials: DecryptedCredentials,
   ): AsyncGenerator<string, TokenUsage, void> {
     const startTime = Date.now();
-    const baseUrl = credentials.endpoint || 'https://api.openai.com/v1';
+    const baseUrl = credentials.endpoint || "https://api.openai.com/v1";
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${credentials.apiKey}`,
       },
       body: JSON.stringify({
@@ -131,12 +144,15 @@ export class OpenAiProvider implements AiProvider {
 
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as any;
-      throw new Error(errorData?.error?.message || `OpenAI streaming failed with status ${response.status}`);
+      throw new Error(
+        errorData?.error?.message ||
+          `OpenAI streaming failed with status ${response.status}`,
+      );
     }
 
     const reader = response.body?.getReader();
-    const decoder = new TextDecoder('utf8');
-    let buffer = '';
+    const decoder = new TextDecoder("utf8");
+    let buffer = "";
 
     if (reader) {
       while (true) {
@@ -144,17 +160,17 @@ export class OpenAiProvider implements AiProvider {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
           const cleanLine = line.trim();
-          if (!cleanLine || cleanLine === 'data: [DONE]') continue;
-          if (cleanLine.startsWith('data: ')) {
+          if (!cleanLine || cleanLine === "data: [DONE]") continue;
+          if (cleanLine.startsWith("data: ")) {
             try {
               const data = JSON.parse(cleanLine.slice(6));
               const choice = data.choices?.[0];
-              const text = choice?.delta?.content || '';
+              const text = choice?.delta?.content || "";
               if (text) {
                 yield text;
               }
@@ -181,16 +197,16 @@ export class OpenAiProvider implements AiProvider {
     credentials: DecryptedCredentials,
   ): Promise<EmbeddingResponse> {
     const startTime = Date.now();
-    const baseUrl = credentials.endpoint || 'https://api.openai.com/v1';
+    const baseUrl = credentials.endpoint || "https://api.openai.com/v1";
 
     const response = await fetch(`${baseUrl}/embeddings`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${credentials.apiKey}`,
       },
       body: JSON.stringify({
-        model: req.model || 'text-embedding-3-small',
+        model: req.model || "text-embedding-3-small",
         input: req.input,
       }),
     });
@@ -199,11 +215,16 @@ export class OpenAiProvider implements AiProvider {
 
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as any;
-      throw new Error(errorData?.error?.message || `OpenAI embedding failed with status ${response.status}`);
+      throw new Error(
+        errorData?.error?.message ||
+          `OpenAI embedding failed with status ${response.status}`,
+      );
     }
 
     const data = (await response.json()) as any;
-    const embeddings = data.data.map((item: { embedding: number[] }) => item.embedding);
+    const embeddings = data.data.map(
+      (item: { embedding: number[] }) => item.embedding,
+    );
 
     return {
       embeddings,
@@ -217,10 +238,14 @@ export class OpenAiProvider implements AiProvider {
     };
   }
 
-  private calculateEstimatedCost(model: string, promptTokens = 0, completionTokens = 0): number {
-    if (model.includes('gpt-4o')) {
-      return (promptTokens * 0.000005) + (completionTokens * 0.000015);
+  private calculateEstimatedCost(
+    model: string,
+    promptTokens = 0,
+    completionTokens = 0,
+  ): number {
+    if (model.includes("gpt-4o")) {
+      return promptTokens * 0.000005 + completionTokens * 0.000015;
     }
-    return (promptTokens * 0.0000015) + (completionTokens * 0.000002);
+    return promptTokens * 0.0000015 + completionTokens * 0.000002;
   }
 }

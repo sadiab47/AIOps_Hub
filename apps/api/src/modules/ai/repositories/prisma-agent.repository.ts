@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { Agent, AgentVersion } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { Agent, AgentVersion } from "@aiops-hub/db";
 import {
   AgentRepositoryInterface,
   AgentWithVersions,
   CreateAgentInput,
-} from './agent-repository.interface';
+} from "./agent-repository.interface";
 
 @Injectable()
 export class PrismaAgentRepository implements AgentRepositoryInterface {
@@ -20,7 +20,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
           slug: data.slug,
           description: data.description,
           createdById: data.createdById,
-          status: 'DRAFT',
+          status: "DRAFT",
           revision: 0,
           currentVersion: 1,
         },
@@ -38,7 +38,8 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
           executionTimeoutMs: data.version.executionTimeoutMs || undefined,
           retryLimit: data.version.retryLimit || undefined,
           streamingEnabled: data.version.streamingEnabled ?? false,
-          memoryStrategyOverride: data.version.memoryStrategyOverride || undefined,
+          memoryStrategyOverride:
+            data.version.memoryStrategyOverride || undefined,
         },
       });
 
@@ -54,7 +55,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
       where: { id, organizationId: orgId, deletedAt: null },
       include: {
         versions: {
-          orderBy: { version: 'desc' },
+          orderBy: { version: "desc" },
         },
       },
     });
@@ -69,7 +70,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
   async list(orgId: string): Promise<Agent[]> {
     return this.prisma.agent.findMany({
       where: { organizationId: orgId, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -77,7 +78,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
     id: string,
     orgId: string,
     nextVersion: number,
-    data: CreateAgentInput['version'],
+    data: CreateAgentInput["version"],
   ): Promise<AgentWithVersions> {
     return this.prisma.$transaction(async (tx) => {
       // 1. Fetch current agent to implement optimistic locking check
@@ -86,7 +87,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
       });
 
       if (!currentAgent) {
-        throw new Error('Agent not found or has been deleted');
+        throw new Error("Agent not found or has been deleted");
       }
 
       // 2. Perform updates and increment revision counter
@@ -118,7 +119,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
         where: { id },
         include: {
           versions: {
-            orderBy: { version: 'desc' },
+            orderBy: { version: "desc" },
           },
         },
       });
@@ -147,7 +148,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
       where: { id },
       data: {
         deletedAt: new Date(),
-        status: 'ARCHIVED',
+        status: "ARCHIVED",
         revision: { increment: 1 },
       },
     });
@@ -157,7 +158,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
     return this.prisma.agent.update({
       where: { id },
       data: {
-        status: 'ACTIVE',
+        status: "ACTIVE",
         revision: { increment: 1 },
       },
     });
@@ -167,7 +168,7 @@ export class PrismaAgentRepository implements AgentRepositoryInterface {
     return this.prisma.agent.update({
       where: { id },
       data: {
-        status: 'DISABLED',
+        status: "DISABLED",
         revision: { increment: 1 },
       },
     });

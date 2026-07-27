@@ -1,56 +1,76 @@
-import { IsString, IsOptional, Matches, IsEnum, IsUrl, IsNumber, IsBoolean, IsInt, Min, Max, ValidateNested, Length } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import { AiProvider } from '@aiops-hub/db';
+import {
+  IsString,
+  IsOptional,
+  Matches,
+  IsEnum,
+  IsUrl,
+  IsNumber,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+  ValidateNested,
+  Length,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiProperty } from "@nestjs/swagger";
+import { AiProvider } from "@aiops-hub/db";
 
 export class UpdateOrganizationProfileDto {
-  @ApiProperty({ example: 'Acme Inc', required: false })
+  @ApiProperty({ example: "Acme Inc", required: false })
   @IsString()
   @IsOptional()
-  @Length(1, 100, { message: 'Organization name must be between 1 and 100 characters' })
+  @Length(1, 100, {
+    message: "Organization name must be between 1 and 100 characters",
+  })
   name?: string;
 
-  @ApiProperty({ example: 'acme-inc', required: false })
+  @ApiProperty({ example: "acme-inc", required: false })
   @IsString()
   @IsOptional()
-  @Length(3, 50, { message: 'Slug must be between 3 and 50 characters' })
+  @Length(3, 50, { message: "Slug must be between 3 and 50 characters" })
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'Slug must be lowercase alphanumeric characters and single hyphens only, and cannot start or end with a hyphen',
+    message:
+      "Slug must be lowercase alphanumeric characters and single hyphens only, and cannot start or end with a hyphen",
   })
   slug?: string;
 }
 
 export class UpdateOrganizationSettingsDto {
-  @ApiProperty({ example: 'UTC', required: false })
+  @ApiProperty({ example: "UTC", required: false })
   @IsString()
   @IsOptional()
   timezone?: string;
 
-  @ApiProperty({ example: 'en', required: false })
+  @ApiProperty({ example: "en", required: false })
   @IsString()
   @IsOptional()
   locale?: string;
 
-  @ApiProperty({ example: '#2563EB', required: false })
+  @ApiProperty({ example: "#2563EB", required: false })
   @IsString()
   @IsOptional()
   @Matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, {
-    message: 'Branding color must be a valid hex color code (e.g. #RGB or #RRGGBB)',
+    message:
+      "Branding color must be a valid hex color code (e.g. #RGB or #RRGGBB)",
   })
   brandingColor?: string;
 
-  @ApiProperty({ example: 'https://example.com/logo.png', required: false })
+  @ApiProperty({ example: "https://example.com/logo.png", required: false })
   @IsString()
   @IsOptional()
-  @IsUrl({ protocols: ['https'] }, { message: 'Logo URL must be a secure HTTPS link' })
+  @IsUrl(
+    { protocols: ["https"] },
+    { message: "Logo URL must be a secure HTTPS link" },
+  )
   logoUrl?: string;
 
   @ApiProperty({ enum: AiProvider, required: false })
-  @IsEnum(AiProvider, { message: 'Invalid AI provider' })
+  @IsEnum(AiProvider, { message: "Invalid AI provider" })
   @IsOptional()
   defaultAiProvider?: AiProvider;
 
-  @ApiProperty({ example: 'gpt-4', required: false })
+  @ApiProperty({ example: "gpt-4", required: false })
   @IsString()
   @IsOptional()
   defaultAiModel?: string;
@@ -62,7 +82,7 @@ export class UpdateOrganizationSettingsDto {
   @Max(2)
   defaultAiTemperature?: number;
 
-  @ApiProperty({ example: 'text-embedding-3-small', required: false })
+  @ApiProperty({ example: "text-embedding-3-small", required: false })
   @IsString()
   @IsOptional()
   defaultEmbeddingModel?: string;

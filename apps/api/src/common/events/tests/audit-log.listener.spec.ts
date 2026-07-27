@@ -1,10 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuditLogListener } from '../listeners/audit-log.listener';
-import { EventBusService } from '../event-bus.service';
-import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../database/audit-log-repository.interface';
-import { OrganizationCreatedEvent } from '../types/organization.events';
+import { Test, TestingModule } from "@nestjs/testing";
+import { AuditLogListener } from "../listeners/audit-log.listener";
+import { EventBusService } from "../event-bus.service";
+import {
+  AUDIT_LOG_REPOSITORY_TOKEN,
+  AuditLogRepositoryInterface,
+} from "../../database/audit-log-repository.interface";
+import { OrganizationCreatedEvent } from "../types/organization.events";
 
-describe('AuditLogListener', () => {
+describe("AuditLogListener", () => {
   let listener: AuditLogListener;
   let eventBus: EventBusService;
   let auditLogRepository: jest.Mocked<AuditLogRepositoryInterface>;
@@ -32,12 +35,12 @@ describe('AuditLogListener', () => {
     listener.onModuleInit();
   });
 
-  it('should create audit log when OrganizationCreatedEvent is published', async () => {
+  it("should create audit log when OrganizationCreatedEvent is published", async () => {
     auditLogRepository.create.mockResolvedValue({} as any);
 
     const event = new OrganizationCreatedEvent(
-      { id: 'org-123', name: 'Acme', slug: 'acme', ownerUserId: 'user-123' },
-      { userId: 'user-123', ipAddress: '127.0.0.1', userAgent: 'Chrome' },
+      { id: "org-123", name: "Acme", slug: "acme", ownerUserId: "user-123" },
+      { userId: "user-123", ipAddress: "127.0.0.1", userAgent: "Chrome" },
     );
 
     eventBus.publish(event);
@@ -46,23 +49,23 @@ describe('AuditLogListener', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(auditLogRepository.create).toHaveBeenCalledWith({
-      userId: 'user-123',
-      action: 'ORGANIZATION_CREATED',
-      entityName: 'organization',
-      entityId: 'org-123',
-      details: { name: 'Acme', slug: 'acme' },
-      ipAddress: '127.0.0.1',
-      userAgent: 'Chrome',
+      userId: "user-123",
+      action: "ORGANIZATION_CREATED",
+      entityName: "organization",
+      entityId: "org-123",
+      details: { name: "Acme", slug: "acme" },
+      ipAddress: "127.0.0.1",
+      userAgent: "Chrome",
     });
   });
 
-  it('should isolate errors thrown by repository', async () => {
+  it("should isolate errors thrown by repository", async () => {
     // Force repository to throw error
-    auditLogRepository.create.mockRejectedValue(new Error('Database down'));
+    auditLogRepository.create.mockRejectedValue(new Error("Database down"));
 
     const event = new OrganizationCreatedEvent(
-      { id: 'org-123', name: 'Acme', slug: 'acme', ownerUserId: 'user-123' },
-      { userId: 'user-123' },
+      { id: "org-123", name: "Acme", slug: "acme", ownerUserId: "user-123" },
+      { userId: "user-123" },
     );
 
     // Should NOT throw exception up to caller

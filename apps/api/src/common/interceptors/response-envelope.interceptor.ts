@@ -3,9 +3,9 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+} from "@nestjs/common";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export interface ResponseEnvelope<T> {
   success: boolean;
@@ -14,9 +14,10 @@ export interface ResponseEnvelope<T> {
 }
 
 @Injectable()
-export class ResponseEnvelopeInterceptor<T>
-  implements NestInterceptor<T, ResponseEnvelope<T>>
-{
+export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
+  T,
+  ResponseEnvelope<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -24,7 +25,12 @@ export class ResponseEnvelopeInterceptor<T>
     return next.handle().pipe(
       map((data) => {
         // If data is already an envelope object, return as-is
-        if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+        if (
+          data &&
+          typeof data === "object" &&
+          "success" in data &&
+          "data" in data
+        ) {
           return data;
         }
 

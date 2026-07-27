@@ -6,36 +6,41 @@ import {
   ConflictException,
   ForbiddenException,
   OnModuleInit,
-} from '@nestjs/common';
-import { Prompt, PromptVersion, PromptVisibility, PromptType } from '@aiops-hub/db';
+} from "@nestjs/common";
+import {
+  Prompt,
+  PromptVersion,
+  PromptVisibility,
+  PromptType,
+} from "@aiops-hub/db";
 import {
   PROMPT_REPOSITORY_TOKEN,
   PromptRepositoryInterface,
-} from '../repositories/prompt-repository.interface';
-import { PromptVariableEngineService } from './prompt-variable-engine.service';
-import { EventBusService } from '../../../common/events/event-bus.service';
-import { EventCorrelationContext } from '../../../common/events/domain-event';
-import { PrismaService } from '../../../common/database/prisma.service';
+} from "../repositories/prompt-repository.interface";
+import { PromptVariableEngineService } from "./prompt-variable-engine.service";
+import { EventBusService } from "../../../common/events/event-bus.service";
+import { EventCorrelationContext } from "../../../common/events/domain-event";
+import { PrismaService } from "../../../common/database/prisma.service";
 import {
   PromptCreatedEvent,
   PromptUpdatedEvent,
   PromptVersionCreatedEvent,
   PromptDeletedEvent,
-} from '../../../common/events/types/prompt.events';
-import { CreatePromptDto } from '../dto/create-prompt.dto';
-import { UpdatePromptDto } from '../dto/update-prompt.dto';
-import { CreateVersionDto } from '../dto/create-version.dto';
+} from "../../../common/events/types/prompt.events";
+import { CreatePromptDto } from "../dto/create-prompt.dto";
+import { UpdatePromptDto } from "../dto/update-prompt.dto";
+import { CreateVersionDto } from "../dto/create-version.dto";
 
 export function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 }
 
 @Injectable()
@@ -51,11 +56,14 @@ export class PromptService implements OnModuleInit {
   async onModuleInit() {
     // Seed default categories
     const categories = [
-      { name: 'Support', description: 'Customer support templates' },
-      { name: 'Sales', description: 'Sales outreach and pitches' },
-      { name: 'Marketing', description: 'Marketing copy and content' },
-      { name: 'Engineering', description: 'Code review, refactoring, and dev tools' },
-      { name: 'Custom', description: 'Generic custom prompts' },
+      { name: "Support", description: "Customer support templates" },
+      { name: "Sales", description: "Sales outreach and pitches" },
+      { name: "Marketing", description: "Marketing copy and content" },
+      {
+        name: "Engineering",
+        description: "Code review, refactoring, and dev tools",
+      },
+      { name: "Custom", description: "Generic custom prompts" },
     ];
 
     for (const cat of categories) {
@@ -82,10 +90,10 @@ export class PromptService implements OnModuleInit {
       where: { id: dto.categoryId },
     });
     if (!categoryExists) {
-      throw new NotFoundException('Prompt category not found');
+      throw new NotFoundException("Prompt category not found");
     }
 
-    const baseSlug = slugify(dto.name) || 'prompt';
+    const baseSlug = slugify(dto.name) || "prompt";
     let slug = baseSlug;
     let suffix = 2;
 
@@ -97,7 +105,10 @@ export class PromptService implements OnModuleInit {
     const result = await this.repository.executeTransaction(async (tx) => {
       const prompt = await this.repository.create(
         {
-          organization: dto.visibility === PromptVisibility.SYSTEM ? undefined : { connect: { id: orgId } },
+          organization:
+            dto.visibility === PromptVisibility.SYSTEM
+              ? undefined
+              : { connect: { id: orgId } },
           category: { connect: { id: dto.categoryId } },
           createdBy: { connect: { id: actorId } },
           name: dto.name,
@@ -114,7 +125,7 @@ export class PromptService implements OnModuleInit {
           prompt: { connect: { id: prompt.id } },
           version: 1,
           template: dto.template,
-          changeLog: dto.changeLog || 'Initial version',
+          changeLog: dto.changeLog || "Initial version",
           createdBy: { connect: { id: actorId } },
         },
         tx,
@@ -154,13 +165,15 @@ export class PromptService implements OnModuleInit {
   ): Promise<Prompt & { latestVersion?: PromptVersion; variables: string[] }> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
 
     this.enforceAccess(prompt, orgId, actorId);
 
     const latest = await this.repository.getLatestVersion(prompt.id);
-    const variables = latest ? this.variableEngine.extractVariables(latest.template) : [];
+    const variables = latest
+      ? this.variableEngine.extractVariables(latest.template)
+      : [];
 
     return {
       ...prompt,
@@ -178,14 +191,14 @@ export class PromptService implements OnModuleInit {
   ): Promise<Prompt> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
 
     this.enforceAccess(prompt, orgId, actorId, true); // True meaning require write access
 
     let slug = prompt.slug;
     if (dto.name && dto.name !== prompt.name) {
-      const baseSlug = slugify(dto.name) || 'prompt';
+      const baseSlug = slugify(dto.name) || "prompt";
       slug = baseSlug;
       let suffix = 2;
       while (await this.repository.existsSlug(orgId, slug)) {
@@ -224,7 +237,7 @@ export class PromptService implements OnModuleInit {
   ): Promise<void> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
 
     this.enforceAccess(prompt, orgId, actorId, true);
@@ -252,7 +265,7 @@ export class PromptService implements OnModuleInit {
   ): Promise<PromptVersion> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
 
     this.enforceAccess(prompt, orgId, actorId, true);
@@ -283,10 +296,14 @@ export class PromptService implements OnModuleInit {
     return version;
   }
 
-  async listVersions(orgId: string, id: string, actorId: string): Promise<PromptVersion[]> {
+  async listVersions(
+    orgId: string,
+    id: string,
+    actorId: string,
+  ): Promise<PromptVersion[]> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
     this.enforceAccess(prompt, orgId, actorId);
     return this.repository.listVersions(id);
@@ -306,7 +323,7 @@ export class PromptService implements OnModuleInit {
   }> {
     const prompt = await this.repository.findById(id, orgId);
     if (!prompt) {
-      throw new NotFoundException('Prompt not found');
+      throw new NotFoundException("Prompt not found");
     }
     this.enforceAccess(prompt, orgId, actorId);
 
@@ -315,7 +332,7 @@ export class PromptService implements OnModuleInit {
       : await this.repository.getLatestVersion(id);
 
     if (!targetVersion) {
-      throw new NotFoundException('Prompt version not found');
+      throw new NotFoundException("Prompt version not found");
     }
 
     return this.variableEngine.preview(targetVersion.template, variables);
@@ -329,17 +346,26 @@ export class PromptService implements OnModuleInit {
   ): void {
     if (prompt.visibility === PromptVisibility.SYSTEM) {
       if (writeRequired && prompt.createdById !== actorId) {
-        throw new ForbiddenException('Only system administrators can modify SYSTEM prompt templates');
+        throw new ForbiddenException(
+          "Only system administrators can modify SYSTEM prompt templates",
+        );
       }
       return;
     }
 
     if (prompt.organizationId !== orgId) {
-      throw new ForbiddenException('Access denied to other organization resources');
+      throw new ForbiddenException(
+        "Access denied to other organization resources",
+      );
     }
 
-    if (prompt.visibility === PromptVisibility.PRIVATE && prompt.createdById !== actorId) {
-      throw new ForbiddenException('This prompt template is marked private and only accessible by its creator');
+    if (
+      prompt.visibility === PromptVisibility.PRIVATE &&
+      prompt.createdById !== actorId
+    ) {
+      throw new ForbiddenException(
+        "This prompt template is marked private and only accessible by its creator",
+      );
     }
   }
 }

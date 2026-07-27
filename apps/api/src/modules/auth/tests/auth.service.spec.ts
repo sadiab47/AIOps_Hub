@@ -1,15 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
-import { AuthService } from '../services/auth.service';
-import { UsersService } from '../../users/services/users.service';
-import { USER_REPOSITORY_TOKEN, UserRepositoryInterface } from '../../users/repositories/user-repository.interface';
-import { AUDIT_LOG_REPOSITORY_TOKEN, AuditLogRepositoryInterface } from '../../../common/database/audit-log-repository.interface';
-import { PasswordService } from '../../../common/auth/password.service';
-import { TokenService } from '../../../common/auth/token.service';
-import { SessionService } from '../services/session.service';
-import * as nodeCrypto from 'crypto';
+import { Test, TestingModule } from "@nestjs/testing";
+import { UnauthorizedException } from "@nestjs/common";
+import { AuthService } from "../services/auth.service";
+import { UsersService } from "../../users/services/users.service";
+import {
+  USER_REPOSITORY_TOKEN,
+  UserRepositoryInterface,
+} from "../../users/repositories/user-repository.interface";
+import {
+  AUDIT_LOG_REPOSITORY_TOKEN,
+  AuditLogRepositoryInterface,
+} from "../../../common/database/audit-log-repository.interface";
+import { PasswordService } from "../../../common/auth/password.service";
+import { TokenService } from "../../../common/auth/token.service";
+import { SessionService } from "../services/session.service";
+import * as nodeCrypto from "crypto";
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let userRepository: jest.Mocked<UserRepositoryInterface>;
@@ -61,7 +67,10 @@ describe('AuthService', () => {
         { provide: PasswordService, useValue: mockPasswordService },
         { provide: TokenService, useValue: mockTokenService },
         { provide: SessionService, useValue: mockSessionService },
-        { provide: AUDIT_LOG_REPOSITORY_TOKEN, useValue: mockAuditLogRepository },
+        {
+          provide: AUDIT_LOG_REPOSITORY_TOKEN,
+          useValue: mockAuditLogRepository,
+        },
       ],
     }).compile();
 
@@ -74,22 +83,22 @@ describe('AuthService', () => {
     auditLogRepository = module.get(AUDIT_LOG_REPOSITORY_TOKEN);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('register', () => {
-    it('should successfully register a user and return tokens', async () => {
+  describe("register", () => {
+    it("should successfully register a user and return tokens", async () => {
       const dto = {
-        email: 'test@example.com',
-        password: 'Password123!',
-        name: 'Test User',
+        email: "test@example.com",
+        password: "Password123!",
+        name: "Test User",
       };
 
       const mockUser = {
-        id: 'user-uuid-123',
+        id: "user-uuid-123",
         email: dto.email,
-        passwordHash: 'hashed_password',
+        passwordHash: "hashed_password",
         name: dto.name,
         isActive: true,
         lockedAt: null,
@@ -99,12 +108,12 @@ describe('AuthService', () => {
         deletedAt: null,
       };
 
-      passwordService.hash.mockResolvedValue('hashed_password');
+      passwordService.hash.mockResolvedValue("hashed_password");
       usersService.create.mockResolvedValue(mockUser);
       sessionService.createSession.mockResolvedValue({
-        accessToken: 'mock_access_token',
-        refreshToken: 'mock_refresh_token',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        accessToken: "mock_access_token",
+        refreshToken: "mock_refresh_token",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
 
       const result = await service.register(dto);
@@ -112,11 +121,16 @@ describe('AuthService', () => {
       expect(passwordService.hash).toHaveBeenCalledWith(dto.password);
       expect(usersService.create).toHaveBeenCalledWith({
         email: dto.email,
-        passwordHash: 'hashed_password',
+        passwordHash: "hashed_password",
         name: dto.name,
       });
 
-      expect(sessionService.createSession).toHaveBeenCalledWith(mockUser.id, mockUser.email, null, null);
+      expect(sessionService.createSession).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        null,
+        null,
+      );
 
       expect(result.user).toEqual({
         id: mockUser.id,
@@ -125,24 +139,24 @@ describe('AuthService', () => {
         createdAt: mockUser.createdAt,
       });
       expect(result.tokens).toEqual({
-        accessToken: 'mock_access_token',
-        refreshToken: 'mock_refresh_token',
+        accessToken: "mock_access_token",
+        refreshToken: "mock_refresh_token",
       });
     });
   });
 
-  describe('login', () => {
+  describe("login", () => {
     const dto = {
-      email: 'login@example.com',
-      password: 'Password123!',
+      email: "login@example.com",
+      password: "Password123!",
     };
 
-    it('should successfully login user with correct credentials', async () => {
+    it("should successfully login user with correct credentials", async () => {
       const mockUser = {
-        id: 'user-uuid-login',
+        id: "user-uuid-login",
         email: dto.email,
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: null,
         lastLoginAt: null,
@@ -154,23 +168,31 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
       passwordService.compare.mockResolvedValue(true);
       sessionService.createSession.mockResolvedValue({
-        accessToken: 'mock_access_token',
-        refreshToken: 'mock_refresh_token',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        accessToken: "mock_access_token",
+        refreshToken: "mock_refresh_token",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
 
-      const result = await service.login(dto, '127.0.0.1', 'Mozilla/5.0');
+      const result = await service.login(dto, "127.0.0.1", "Mozilla/5.0");
 
       expect(usersService.findByEmail).toHaveBeenCalledWith(dto.email);
-      expect(passwordService.compare).toHaveBeenCalledWith(dto.password, mockUser.passwordHash);
+      expect(passwordService.compare).toHaveBeenCalledWith(
+        dto.password,
+        mockUser.passwordHash,
+      );
       expect(userRepository.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
-      expect(sessionService.createSession).toHaveBeenCalledWith(mockUser.id, mockUser.email, '127.0.0.1', 'Mozilla/5.0');
+      expect(sessionService.createSession).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        "127.0.0.1",
+        "Mozilla/5.0",
+      );
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGIN',
-          ipAddress: '127.0.0.1',
-          userAgent: 'Mozilla/5.0',
+          action: "USER_LOGIN",
+          ipAddress: "127.0.0.1",
+          userAgent: "Mozilla/5.0",
         }),
       );
 
@@ -181,33 +203,33 @@ describe('AuthService', () => {
           name: mockUser.name,
         },
         tokens: {
-          accessToken: 'mock_access_token',
-          refreshToken: 'mock_refresh_token',
+          accessToken: "mock_access_token",
+          refreshToken: "mock_refresh_token",
         },
       });
     });
 
-    it('should throw UnauthorizedException on non-existent user', async () => {
+    it("should throw UnauthorizedException on non-existent user", async () => {
       usersService.findByEmail.mockResolvedValue(null);
 
-      await expect(service.login(dto, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(dto, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'USER_LOGIN_FAILED',
-          details: expect.objectContaining({ reason: 'User not found' }),
+          action: "USER_LOGIN_FAILED",
+          details: expect.objectContaining({ reason: "User not found" }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on inactive user', async () => {
+    it("should throw UnauthorizedException on inactive user", async () => {
       const mockUser = {
-        id: 'user-uuid-login',
+        id: "user-uuid-login",
         email: dto.email,
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: false,
         lockedAt: null,
         lastLoginAt: null,
@@ -218,25 +240,25 @@ describe('AuthService', () => {
 
       usersService.findByEmail.mockResolvedValue(mockUser);
 
-      await expect(service.login(dto, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(dto, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGIN_FAILED',
-          details: expect.objectContaining({ reason: 'User inactive' }),
+          action: "USER_LOGIN_FAILED",
+          details: expect.objectContaining({ reason: "User inactive" }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on locked account', async () => {
+    it("should throw UnauthorizedException on locked account", async () => {
       const mockUser = {
-        id: 'user-uuid-login',
+        id: "user-uuid-login",
         email: dto.email,
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: new Date(),
         lastLoginAt: null,
@@ -247,25 +269,25 @@ describe('AuthService', () => {
 
       usersService.findByEmail.mockResolvedValue(mockUser);
 
-      await expect(service.login(dto, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(dto, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGIN_FAILED',
-          details: expect.objectContaining({ reason: 'Account locked' }),
+          action: "USER_LOGIN_FAILED",
+          details: expect.objectContaining({ reason: "Account locked" }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on wrong password', async () => {
+    it("should throw UnauthorizedException on wrong password", async () => {
       const mockUser = {
-        id: 'user-uuid-login',
+        id: "user-uuid-login",
         email: dto.email,
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: null,
         lastLoginAt: null,
@@ -277,37 +299,40 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
       passwordService.compare.mockResolvedValue(false);
 
-      await expect(service.login(dto, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(dto, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGIN_FAILED',
-          details: expect.objectContaining({ reason: 'Incorrect password' }),
+          action: "USER_LOGIN_FAILED",
+          details: expect.objectContaining({ reason: "Incorrect password" }),
         }),
       );
     });
   });
 
-  describe('refreshSession', () => {
-    const mockToken = 'mock_refresh_token_value';
-    const mockTokenHash = nodeCrypto.createHash('sha256').update(mockToken).digest('hex');
+  describe("refreshSession", () => {
+    const mockToken = "mock_refresh_token_value";
+    const mockTokenHash = nodeCrypto
+      .createHash("sha256")
+      .update(mockToken)
+      .digest("hex");
 
-    it('should successfully rotate tokens on valid session', async () => {
+    it("should successfully rotate tokens on valid session", async () => {
       const mockPayload = {
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       };
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
         tokenHash: mockTokenHash,
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
         revokedReason: null,
@@ -316,10 +341,10 @@ describe('AuthService', () => {
       };
 
       const mockUser = {
-        id: 'user-uuid-login',
-        email: 'test@example.com',
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        id: "user-uuid-login",
+        email: "test@example.com",
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -331,110 +356,121 @@ describe('AuthService', () => {
       tokenService.verify.mockResolvedValue(mockPayload);
       sessionService.findActiveSession.mockResolvedValue(mockSession);
       usersService.findById.mockResolvedValue(mockUser);
-      tokenService.generateAccess.mockResolvedValue('new_access_token');
-      tokenService.generateRefresh.mockResolvedValue('new_refresh_token');
+      tokenService.generateAccess.mockResolvedValue("new_access_token");
+      tokenService.generateRefresh.mockResolvedValue("new_refresh_token");
 
-      const result = await service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      const result = await service.refreshSession(
+        mockToken,
+        "127.0.0.1",
+        "Mozilla/5.0",
+      );
 
       expect(tokenService.verify).toHaveBeenCalledWith(mockToken);
-      expect(sessionService.findActiveSession).toHaveBeenCalledWith(mockPayload.sessionId);
+      expect(sessionService.findActiveSession).toHaveBeenCalledWith(
+        mockPayload.sessionId,
+      );
       expect(usersService.findById).toHaveBeenCalledWith(mockSession.userId);
-      expect(sessionService.rotateSession).toHaveBeenCalledWith(mockSession.id, 'new_refresh_token');
+      expect(sessionService.rotateSession).toHaveBeenCalledWith(
+        mockSession.id,
+        "new_refresh_token",
+      );
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'TOKEN_REFRESH',
+          action: "TOKEN_REFRESH",
         }),
       );
 
       expect(result).toEqual({
-        accessToken: 'new_access_token',
-        refreshToken: 'new_refresh_token',
+        accessToken: "new_access_token",
+        refreshToken: "new_refresh_token",
       });
     });
 
-    it('should throw UnauthorizedException on verification failure', async () => {
-      tokenService.verify.mockRejectedValue(new Error('Invalid signature'));
+    it("should throw UnauthorizedException on verification failure", async () => {
+      tokenService.verify.mockRejectedValue(new Error("Invalid signature"));
 
-      await expect(service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.refreshSession(mockToken, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'TOKEN_REFRESH_FAILED',
-          details: expect.objectContaining({ reason: 'Invalid or expired token signature' }),
+          action: "TOKEN_REFRESH_FAILED",
+          details: expect.objectContaining({
+            reason: "Invalid or expired token signature",
+          }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on session not found', async () => {
+    it("should throw UnauthorizedException on session not found", async () => {
       tokenService.verify.mockResolvedValue({
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
       sessionService.findActiveSession.mockResolvedValue(null);
 
-      await expect(service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.refreshSession(mockToken, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'TOKEN_REFRESH_FAILED',
-          details: expect.objectContaining({ reason: 'Session not found' }),
+          action: "TOKEN_REFRESH_FAILED",
+          details: expect.objectContaining({ reason: "Session not found" }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on session revoked', async () => {
+    it("should throw UnauthorizedException on session revoked", async () => {
       tokenService.verify.mockResolvedValue({
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
         tokenHash: mockTokenHash,
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: new Date(),
-        revokedReason: 'USER_LOGOUT',
+        revokedReason: "USER_LOGOUT",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       sessionService.findActiveSession.mockResolvedValue(mockSession);
 
-      await expect(service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.refreshSession(mockToken, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'TOKEN_REFRESH_FAILED',
-          details: expect.objectContaining({ reason: 'Session revoked' }),
+          action: "TOKEN_REFRESH_FAILED",
+          details: expect.objectContaining({ reason: "Session revoked" }),
         }),
       );
     });
 
-    it('should throw UnauthorizedException on session expired', async () => {
+    it("should throw UnauthorizedException on session expired", async () => {
       tokenService.verify.mockResolvedValue({
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
         tokenHash: mockTokenHash,
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() - 100000),
         revokedAt: null,
         revokedReason: null,
@@ -444,31 +480,31 @@ describe('AuthService', () => {
 
       sessionService.findActiveSession.mockResolvedValue(mockSession);
 
-      await expect(service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.refreshSession(mockToken, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
 
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'TOKEN_REFRESH_FAILED',
-          details: expect.objectContaining({ reason: 'Session expired' }),
+          action: "TOKEN_REFRESH_FAILED",
+          details: expect.objectContaining({ reason: "Session expired" }),
         }),
       );
     });
 
-    it('should detect reuse and immediately revoke all user sessions', async () => {
+    it("should detect reuse and immediately revoke all user sessions", async () => {
       tokenService.verify.mockResolvedValue({
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       });
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
-        tokenHash: 'different_stale_token_hash',
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
+        tokenHash: "different_stale_token_hash",
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
         revokedReason: null,
@@ -477,10 +513,10 @@ describe('AuthService', () => {
       };
 
       const mockUser = {
-        id: 'user-uuid-login',
-        email: 'test@example.com',
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        id: "user-uuid-login",
+        email: "test@example.com",
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -492,29 +528,28 @@ describe('AuthService', () => {
       sessionService.findActiveSession.mockResolvedValue(mockSession);
       usersService.findById.mockResolvedValue(mockUser);
 
-      await expect(service.refreshSession(mockToken, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
-        UnauthorizedException,
-      );
-
+      await expect(
+        service.refreshSession(mockToken, "127.0.0.1", "Mozilla/5.0"),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
-  describe('logout', () => {
-    const mockToken = 'mock_refresh_token_value';
+  describe("logout", () => {
+    const mockToken = "mock_refresh_token_value";
 
-    it('should successfully log out and revoke active session', async () => {
+    it("should successfully log out and revoke active session", async () => {
       const mockPayload = {
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       };
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
-        tokenHash: 'token_hash',
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
+        tokenHash: "token_hash",
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
         revokedReason: null,
@@ -525,46 +560,51 @@ describe('AuthService', () => {
       tokenService.verify.mockResolvedValue(mockPayload);
       sessionService.findActiveSession.mockResolvedValue(mockSession);
 
-      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      await service.logout(mockToken, "127.0.0.1", "Mozilla/5.0");
 
       expect(tokenService.verify).toHaveBeenCalledWith(mockToken);
-      expect(sessionService.findActiveSession).toHaveBeenCalledWith(mockPayload.sessionId);
-      expect(sessionService.revokeSession).toHaveBeenCalledWith(mockSession.id, 'USER_LOGOUT');
+      expect(sessionService.findActiveSession).toHaveBeenCalledWith(
+        mockPayload.sessionId,
+      );
+      expect(sessionService.revokeSession).toHaveBeenCalledWith(
+        mockSession.id,
+        "USER_LOGOUT",
+      );
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockSession.userId,
-          action: 'USER_LOGOUT',
+          action: "USER_LOGOUT",
         }),
       );
     });
 
-    it('should return immediately without errors if token is missing', async () => {
-      await service.logout(undefined, '127.0.0.1', 'Mozilla/5.0');
+    it("should return immediately without errors if token is missing", async () => {
+      await service.logout(undefined, "127.0.0.1", "Mozilla/5.0");
       expect(tokenService.verify).not.toHaveBeenCalled();
     });
 
-    it('should return immediately without errors if token verification fails', async () => {
-      tokenService.verify.mockRejectedValue(new Error('Invalid token'));
-      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+    it("should return immediately without errors if token verification fails", async () => {
+      tokenService.verify.mockRejectedValue(new Error("Invalid token"));
+      await service.logout(mockToken, "127.0.0.1", "Mozilla/5.0");
       expect(sessionService.findActiveSession).not.toHaveBeenCalled();
     });
 
-    it('should return immediately without errors if session is already revoked', async () => {
+    it("should return immediately without errors if session is already revoked", async () => {
       const mockPayload = {
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       };
 
       const mockSession = {
-        id: '12345678-1234-1234-1234-123456789012',
-        userId: 'user-uuid-login',
-        tokenHash: 'token_hash',
-        userAgent: 'Mozilla/5.0',
-        ipAddress: '127.0.0.1',
+        id: "12345678-1234-1234-1234-123456789012",
+        userId: "user-uuid-login",
+        tokenHash: "token_hash",
+        userAgent: "Mozilla/5.0",
+        ipAddress: "127.0.0.1",
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: new Date(),
-        revokedReason: 'USER_LOGOUT',
+        revokedReason: "USER_LOGOUT",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -572,26 +612,26 @@ describe('AuthService', () => {
       tokenService.verify.mockResolvedValue(mockPayload);
       sessionService.findActiveSession.mockResolvedValue(mockSession);
 
-      await service.logout(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      await service.logout(mockToken, "127.0.0.1", "Mozilla/5.0");
       expect(sessionService.revokeSession).not.toHaveBeenCalled();
     });
   });
 
-  describe('logoutAll', () => {
-    const mockToken = 'mock_refresh_token_value';
+  describe("logoutAll", () => {
+    const mockToken = "mock_refresh_token_value";
 
-    it('should successfully log out all user sessions', async () => {
+    it("should successfully log out all user sessions", async () => {
       const mockPayload = {
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       };
 
       const mockUser = {
-        id: 'user-uuid-login',
-        email: 'test@example.com',
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        id: "user-uuid-login",
+        email: "test@example.com",
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: true,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -603,36 +643,39 @@ describe('AuthService', () => {
       tokenService.verify.mockResolvedValue(mockPayload);
       usersService.findById.mockResolvedValue(mockUser);
 
-      await service.logoutAll(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      await service.logoutAll(mockToken, "127.0.0.1", "Mozilla/5.0");
 
       expect(tokenService.verify).toHaveBeenCalledWith(mockToken);
       expect(usersService.findById).toHaveBeenCalledWith(mockPayload.sub);
-      expect(sessionService.revokeAllSessions).toHaveBeenCalledWith(mockUser.id, 'LOGOUT_ALL');
+      expect(sessionService.revokeAllSessions).toHaveBeenCalledWith(
+        mockUser.id,
+        "LOGOUT_ALL",
+      );
       expect(auditLogRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
-          action: 'USER_LOGOUT_ALL',
+          action: "USER_LOGOUT_ALL",
         }),
       );
     });
 
-    it('should return immediately without errors if token is missing', async () => {
-      await service.logoutAll(undefined, '127.0.0.1', 'Mozilla/5.0');
+    it("should return immediately without errors if token is missing", async () => {
+      await service.logoutAll(undefined, "127.0.0.1", "Mozilla/5.0");
       expect(tokenService.verify).not.toHaveBeenCalled();
     });
 
-    it('should return immediately without errors if user is suspended', async () => {
+    it("should return immediately without errors if user is suspended", async () => {
       const mockPayload = {
-        sub: 'user-uuid-login',
-        email: 'test@example.com',
-        sessionId: '12345678-1234-1234-1234-123456789012',
+        sub: "user-uuid-login",
+        email: "test@example.com",
+        sessionId: "12345678-1234-1234-1234-123456789012",
       };
 
       const mockUser = {
-        id: 'user-uuid-login',
-        email: 'test@example.com',
-        passwordHash: 'hashed_password',
-        name: 'Jane Doe',
+        id: "user-uuid-login",
+        email: "test@example.com",
+        passwordHash: "hashed_password",
+        name: "Jane Doe",
         isActive: false,
         lockedAt: null,
         lastLoginAt: new Date(),
@@ -644,7 +687,7 @@ describe('AuthService', () => {
       tokenService.verify.mockResolvedValue(mockPayload);
       usersService.findById.mockResolvedValue(mockUser);
 
-      await service.logoutAll(mockToken, '127.0.0.1', 'Mozilla/5.0');
+      await service.logoutAll(mockToken, "127.0.0.1", "Mozilla/5.0");
       expect(sessionService.revokeAllSessions).not.toHaveBeenCalled();
     });
   });

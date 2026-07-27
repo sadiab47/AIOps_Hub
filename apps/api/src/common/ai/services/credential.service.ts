@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { EncryptionService } from './encryption.service';
-import { DecryptedCredentials } from '../types/ai-provider.interface';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { EncryptionService } from "./encryption.service";
+import { DecryptedCredentials } from "../types/ai-provider.interface";
 
 @Injectable()
 export class CredentialService {
@@ -22,7 +22,7 @@ export class CredentialService {
     try {
       return JSON.parse(json) as DecryptedCredentials;
     } catch {
-      throw new BadRequestException('Malformed credential payload format');
+      throw new BadRequestException("Malformed credential payload format");
     }
   }
 }

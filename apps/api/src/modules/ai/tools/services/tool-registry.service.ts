@@ -1,5 +1,5 @@
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
-import { AgentTool } from '../interfaces/tool.interface';
+import { Injectable, ConflictException, Logger } from "@nestjs/common";
+import { AgentTool } from "../interfaces/tool.interface";
 
 @Injectable()
 export class ToolRegistry {
@@ -9,8 +9,12 @@ export class ToolRegistry {
   register(tool: AgentTool): void {
     const name = tool.definition.name.toLowerCase();
     if (this.tools.has(name)) {
-      this.logger.error(`Duplicate tool registration attempted for tool: ${tool.definition.name}`);
-      throw new ConflictException(`Tool with name '${tool.definition.name}' is already registered.`);
+      this.logger.error(
+        `Duplicate tool registration attempted for tool: ${tool.definition.name}`,
+      );
+      throw new ConflictException(
+        `Tool with name '${tool.definition.name}' is already registered.`,
+      );
     }
     this.tools.set(name, tool);
     this.logger.log(`Registered tool: ${tool.definition.name}`);

@@ -1,20 +1,26 @@
-import { Member, OrgRole, User } from '@aiops-hub/db';
+import { Member, OrgRole, User } from "@aiops-hub/db";
 
-export const MEMBER_REPOSITORY_TOKEN = 'MemberRepositoryInterface';
+export const MEMBER_REPOSITORY_TOKEN = "MemberRepositoryInterface";
 
 export type MemberWithUser = Member & {
-  user: Pick<User, 'id' | 'email' | 'name'>;
+  user: Pick<User, "id" | "email" | "name">;
 };
 
 export interface MemberRepositoryInterface {
   /** Check if a user is an active member of an organization. */
-  findMembership(userId: string, organizationId: string): Promise<Member | null>;
+  findMembership(
+    userId: string,
+    organizationId: string,
+  ): Promise<Member | null>;
 
   /** List all active members of an organization, with user profile fields. */
   findMembersByOrganization(organizationId: string): Promise<MemberWithUser[]>;
 
   /** Fetch a single member by their member record ID, scoped to an organization. */
-  findMemberById(memberId: string, organizationId: string): Promise<MemberWithUser | null>;
+  findMemberById(
+    memberId: string,
+    organizationId: string,
+  ): Promise<MemberWithUser | null>;
 
   /**
    * Return the first active OWNER of the organization.

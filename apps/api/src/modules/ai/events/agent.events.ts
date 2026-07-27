@@ -1,10 +1,13 @@
-import { DomainEvent, EventCorrelationContext } from '../../../common/events/domain-event';
+import {
+  DomainEvent,
+  EventCorrelationContext,
+} from "../../../common/events/domain-event";
 
-export const EVENT_NAME_AGENT_CREATED = 'agent.created';
-export const EVENT_NAME_AGENT_UPDATED = 'agent.updated';
-export const EVENT_NAME_AGENT_DELETED = 'agent.deleted';
-export const EVENT_NAME_AGENT_ENABLED = 'agent.enabled';
-export const EVENT_NAME_AGENT_DISABLED = 'agent.disabled';
+export const EVENT_NAME_AGENT_CREATED = "agent.created";
+export const EVENT_NAME_AGENT_UPDATED = "agent.updated";
+export const EVENT_NAME_AGENT_DELETED = "agent.deleted";
+export const EVENT_NAME_AGENT_ENABLED = "agent.enabled";
+export const EVENT_NAME_AGENT_DISABLED = "agent.disabled";
 
 export class AgentCreatedEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_AGENT_CREATED;

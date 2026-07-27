@@ -1,6 +1,6 @@
-import { RefreshToken, Prisma } from '@aiops-hub/db';
+import { RefreshToken, Prisma } from "@aiops-hub/db";
 
-export const REFRESH_TOKEN_REPOSITORY_TOKEN = 'RefreshTokenRepositoryInterface';
+export const REFRESH_TOKEN_REPOSITORY_TOKEN = "RefreshTokenRepositoryInterface";
 
 export interface RefreshTokenRepositoryInterface {
   create(data: Prisma.RefreshTokenUncheckedCreateInput): Promise<RefreshToken>;

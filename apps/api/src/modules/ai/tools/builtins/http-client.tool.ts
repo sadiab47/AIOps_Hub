@@ -1,46 +1,48 @@
-import { AgentTool, ToolDefinition } from '../interfaces/tool.interface';
+import { AgentTool, ToolDefinition } from "../interfaces/tool.interface";
 
 export class HttpClientTool implements AgentTool {
   readonly definition: ToolDefinition = {
-    name: 'http_client',
-    description: 'Perform sandboxed HTTP GET or POST requests to allow-listed domains.',
+    name: "http_client",
+    description:
+      "Perform sandboxed HTTP GET or POST requests to allow-listed domains.",
     inputSchema: {
-      type: 'object',
+      type: "object",
       properties: {
         method: {
-          type: 'string',
-          enum: ['GET', 'POST'],
-          description: 'The HTTP method.',
+          type: "string",
+          enum: ["GET", "POST"],
+          description: "The HTTP method.",
         },
         url: {
-          type: 'string',
-          format: 'uri',
-          description: 'The request destination URL. Must be in the domain allow-list.',
+          type: "string",
+          format: "uri",
+          description:
+            "The request destination URL. Must be in the domain allow-list.",
         },
         headers: {
-          type: 'object',
-          description: 'Optional HTTP request headers dictionary.',
-          additionalProperties: { type: 'string' },
+          type: "object",
+          description: "Optional HTTP request headers dictionary.",
+          additionalProperties: { type: "string" },
         },
         body: {
-          type: 'string',
-          description: 'Optional stringified request payload.',
+          type: "string",
+          description: "Optional stringified request payload.",
         },
       },
-      required: ['method', 'url'],
+      required: ["method", "url"],
       additionalProperties: false,
     },
   };
 
   private readonly allowedDomains = [
-    'api.github.com',
-    'api.weather.gov',
-    'httpbin.org',
-    'localhost:3001',
+    "api.github.com",
+    "api.weather.gov",
+    "httpbin.org",
+    "localhost:3001",
   ];
 
   async execute(input: {
-    method: 'GET' | 'POST';
+    method: "GET" | "POST";
     url: string;
     headers?: Record<string, string>;
     body?: string;
@@ -56,10 +58,14 @@ export class HttpClientTool implements AgentTool {
     }
 
     const host = parsedUrl.host.toLowerCase();
-    const isAllowed = this.allowedDomains.some(domain => host === domain || host.endsWith('.' + domain));
+    const isAllowed = this.allowedDomains.some(
+      (domain) => host === domain || host.endsWith("." + domain),
+    );
 
     if (!isAllowed) {
-      throw new Error(`Access Denied: Domain '${host}' is not in the allow-list.`);
+      throw new Error(
+        `Access Denied: Domain '${host}' is not in the allow-list.`,
+      );
     }
 
     try {
@@ -69,10 +75,10 @@ export class HttpClientTool implements AgentTool {
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...headers,
         },
-        body: method === 'POST' ? body : undefined,
+        body: method === "POST" ? body : undefined,
         signal: controller.signal,
       });
 
@@ -84,8 +90,8 @@ export class HttpClientTool implements AgentTool {
       });
 
       let responseData: any;
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
         responseData = await response.json();
       } else {
         responseData = await response.text();
@@ -97,8 +103,8 @@ export class HttpClientTool implements AgentTool {
         data: responseData,
       };
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        throw new Error('HTTP request timed out after 10 seconds.');
+      if (err.name === "AbortError") {
+        throw new Error("HTTP request timed out after 10 seconds.");
       }
       throw new Error(`HTTP request failed: ${err.message}`);
     }

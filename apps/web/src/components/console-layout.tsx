@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Zap,
   LayoutDashboard,
@@ -14,9 +14,9 @@ import {
   LogOut,
   ChevronDown,
   Activity,
-  User
-} from 'lucide-react';
-import api from '../components/api';
+  User,
+} from "lucide-react";
+import api from "../components/api";
 
 interface Org {
   id: string;
@@ -24,51 +24,63 @@ interface Org {
   slug: string;
 }
 
-export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
+export default function ConsoleLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<{ name?: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; email: string } | null>(
+    null,
+  );
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [activeOrg, setActiveOrg] = useState<Org | null>(null);
-  const [healthStatus, setHealthStatus] = useState<'healthy' | 'degraded' | 'down'>('healthy');
+  const [healthStatus, setHealthStatus] = useState<
+    "healthy" | "degraded" | "down"
+  >("healthy");
 
   // Sidebar navigation mapping
   const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Agent Registry', path: '/agents', icon: Bot },
-    { label: 'Prompt Library', path: '/prompts', icon: BookOpen },
-    { label: 'AI Providers', path: '/providers', icon: Cpu },
-    { label: 'Usage Analytics', path: '/analytics', icon: BarChart3 },
-    { label: 'Playground', path: '/playground', icon: Terminal },
-    { label: 'Settings', path: '/settings', icon: Settings },
+    { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { label: "Agent Registry", path: "/agents", icon: Bot },
+    { label: "Prompt Library", path: "/prompts", icon: BookOpen },
+    { label: "AI Providers", path: "/providers", icon: Cpu },
+    { label: "Usage Analytics", path: "/analytics", icon: BarChart3 },
+    { label: "Playground", path: "/playground", icon: Terminal },
+    { label: "Settings", path: "/settings", icon: Settings },
   ];
 
   useEffect(() => {
     // 1. Load User profile from cache
-    const cachedUser = localStorage.getItem('user_profile');
+    const cachedUser = localStorage.getItem("user_profile");
     if (cachedUser) {
       setUser(JSON.parse(cachedUser));
     }
 
     // 2. Fetch Organizations
-    api.get('/organizations')
-      .then(res => {
+    api
+      .get("/organizations")
+      .then((res) => {
         const organizations = res.data.data;
         setOrgs(organizations);
-        const savedOrgId = localStorage.getItem('active_org_id');
-        const currentOrg = organizations.find((o: Org) => o.id === savedOrgId) || organizations[0];
+        const savedOrgId = localStorage.getItem("active_org_id");
+        const currentOrg =
+          organizations.find((o: Org) => o.id === savedOrgId) ||
+          organizations[0];
         if (currentOrg) {
           setActiveOrg(currentOrg);
-          localStorage.setItem('active_org_id', currentOrg.id);
+          localStorage.setItem("active_org_id", currentOrg.id);
         }
       })
       .catch(() => {});
 
     // 3. System Health polling
     const pollHealth = () => {
-      api.get('/health/ready')
-        .then(() => setHealthStatus('healthy'))
-        .catch(() => setHealthStatus('down'));
+      api
+        .get("/health/ready")
+        .then(() => setHealthStatus("healthy"))
+        .catch(() => setHealthStatus("down"));
     };
     pollHealth();
     const interval = setInterval(pollHealth, 25000);
@@ -76,21 +88,21 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   }, []);
 
   const handleOrgChange = (orgId: string) => {
-    const selected = orgs.find(o => o.id === orgId);
+    const selected = orgs.find((o) => o.id === orgId);
     if (selected) {
       setActiveOrg(selected);
-      localStorage.setItem('active_org_id', selected.id);
+      localStorage.setItem("active_org_id", selected.id);
       window.location.reload(); // Refresh components state on context swap
     }
   };
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
     } catch {}
-    localStorage.removeItem('active_org_id');
-    localStorage.removeItem('user_profile');
-    router.push('/login');
+    localStorage.removeItem("active_org_id");
+    localStorage.removeItem("user_profile");
+    router.push("/login");
   };
 
   return (
@@ -112,12 +124,16 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
           <div className="p-4 border-b border-white/[0.05]">
             <div className="relative">
               <select
-                value={activeOrg?.id || ''}
-                onChange={e => handleOrgChange(e.target.value)}
+                value={activeOrg?.id || ""}
+                onChange={(e) => handleOrgChange(e.target.value)}
                 className="w-full bg-white/[0.02] border border-white/[0.08] hover:border-white/[0.15] text-xs text-white rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer font-medium transition-colors"
               >
-                {orgs.map(o => (
-                  <option key={o.id} value={o.id} className="bg-[#0c0c14] text-white">
+                {orgs.map((o) => (
+                  <option
+                    key={o.id}
+                    value={o.id}
+                    className="bg-[#0c0c14] text-white"
+                  >
                     {o.name}
                   </option>
                 ))}
@@ -128,7 +144,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
 
           {/* Nav List */}
           <nav className="p-3 space-y-1">
-            {navItems.map(item => {
+            {navItems.map((item) => {
               const active = pathname === item.path;
               return (
                 <a
@@ -136,8 +152,8 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
                   href={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     active
-                      ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/10'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02] border border-transparent'
+                      ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/10"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02] border border-transparent"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -155,8 +171,12 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
               <User className="h-4 w-4 text-zinc-400" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-zinc-200 truncate">{user?.name || 'Workspace User'}</div>
-              <div className="text-[10px] text-zinc-500 truncate">{user?.email || ''}</div>
+              <div className="text-xs font-semibold text-zinc-200 truncate">
+                {user?.name || "Workspace User"}
+              </div>
+              <div className="text-[10px] text-zinc-500 truncate">
+                {user?.email || ""}
+              </div>
             </div>
           </div>
 

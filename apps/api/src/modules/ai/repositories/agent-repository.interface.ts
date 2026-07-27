@@ -1,6 +1,6 @@
-import { Agent, AgentVersion } from '@aiops-hub/db';
+import { Agent, AgentVersion } from "@aiops-hub/db";
 
-export const AGENT_REPOSITORY_TOKEN = Symbol('AGENT_REPOSITORY_TOKEN');
+export const AGENT_REPOSITORY_TOKEN = Symbol("AGENT_REPOSITORY_TOKEN");
 
 export interface AgentWithVersions extends Agent {
   versions: AgentVersion[];
@@ -38,7 +38,7 @@ export interface AgentRepositoryInterface {
     id: string,
     orgId: string,
     nextVersion: number,
-    data: CreateAgentInput['version'],
+    data: CreateAgentInput["version"],
   ): Promise<AgentWithVersions>;
 
   updateMetadata(

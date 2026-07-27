@@ -1,6 +1,6 @@
-import { Module, Global } from '@nestjs/common';
-import { EventBusService } from './event-bus.service';
-import { AuditLogListener } from './listeners/audit-log.listener';
+import { Module, Global } from "@nestjs/common";
+import { EventBusService } from "./event-bus.service";
+import { AuditLogListener } from "./listeners/audit-log.listener";
 
 @Global()
 @Module({

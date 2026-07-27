@@ -1,7 +1,10 @@
-import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
-import { EventBusService } from '../../../common/events/event-bus.service';
-import { AiUsageLoggedEvent } from '../events/chat.events';
-import { USAGE_REPOSITORY_TOKEN, UsageRepositoryInterface } from '../repositories/usage-repository.interface';
+import { Injectable, OnModuleInit, Inject } from "@nestjs/common";
+import { EventBusService } from "../../../common/events/event-bus.service";
+import { AiUsageLoggedEvent } from "../events/chat.events";
+import {
+  USAGE_REPOSITORY_TOKEN,
+  UsageRepositoryInterface,
+} from "../repositories/usage-repository.interface";
 
 @Injectable()
 export class UsageEventListener implements OnModuleInit {

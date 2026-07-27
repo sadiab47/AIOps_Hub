@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { AuditLogRepositoryInterface } from './audit-log-repository.interface';
-import { AuditLog, Prisma } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "./prisma.service";
+import { AuditLogRepositoryInterface } from "./audit-log-repository.interface";
+import { AuditLog, Prisma } from "@aiops-hub/db";
 
 @Injectable()
 export class AuditLogRepository implements AuditLogRepositoryInterface {

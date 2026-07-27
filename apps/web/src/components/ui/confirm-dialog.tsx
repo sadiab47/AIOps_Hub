@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -10,7 +10,14 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export function ConfirmDialog({ isOpen, title, description, loading, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  isOpen,
+  title,
+  description,
+  loading,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -22,7 +29,9 @@ export function ConfirmDialog({ isOpen, title, description, loading, onConfirm, 
           </div>
           <div>
             <h3 className="text-base font-bold text-white">{title}</h3>
-            <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{description}</p>
+            <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+              {description}
+            </p>
           </div>
         </div>
 
@@ -39,7 +48,11 @@ export function ConfirmDialog({ isOpen, title, description, loading, onConfirm, 
             disabled={loading}
             className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 text-white text-xs font-semibold transition-all flex items-center gap-1.5"
           >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Confirm'}
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "Confirm"
+            )}
           </button>
         </div>
       </div>

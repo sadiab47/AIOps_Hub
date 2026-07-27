@@ -1,12 +1,12 @@
-import { SetMetadata, applyDecorators } from '@nestjs/common';
-import { Permission } from '../constants/permissions';
+import { SetMetadata, applyDecorators } from "@nestjs/common";
+import { Permission } from "../constants/permissions";
 
-export const PERMISSIONS_KEY = 'permissions';
-export const PERMISSIONS_MODE_KEY = 'permissions_mode';
+export const PERMISSIONS_KEY = "permissions";
+export const PERMISSIONS_MODE_KEY = "permissions_mode";
 
 export enum PermissionMode {
-  ALL = 'ALL',
-  ANY = 'ANY',
+  ALL = "ALL",
+  ANY = "ANY",
 }
 
 /**

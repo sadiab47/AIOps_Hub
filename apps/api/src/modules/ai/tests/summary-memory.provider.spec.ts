@@ -1,13 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Conversation, Message, ConversationSummary, AiProvider } from '@aiops-hub/db';
-import { SummaryMemoryProvider } from '../services/summary-memory.provider';
-import { ContextBuilder } from '../services/context-builder';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { AiProviderFactory } from '../../../common/ai/factories/ai-provider.factory';
-import { CredentialService } from '../../../common/ai/services/credential.service';
-import { EventBusService } from '../../../common/events/event-bus.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  Conversation,
+  Message,
+  ConversationSummary,
+  AiProvider,
+} from "@aiops-hub/db";
+import { SummaryMemoryProvider } from "../services/summary-memory.provider";
+import { ContextBuilder } from "../services/context-builder";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { AiProviderFactory } from "../../../common/ai/factories/ai-provider.factory";
+import { CredentialService } from "../../../common/ai/services/credential.service";
+import { EventBusService } from "../../../common/events/event-bus.service";
 
-describe('SummaryMemoryProvider', () => {
+describe("SummaryMemoryProvider", () => {
   let provider: SummaryMemoryProvider;
   let contextBuilder: ContextBuilder;
   let prisma: any;
@@ -17,7 +22,7 @@ describe('SummaryMemoryProvider', () => {
 
   const mockOpenAiInstance = {
     streamCompletion: async function* () {
-      yield 'Mocked Summary Text';
+      yield "Mocked Summary Text";
     },
   };
 
@@ -25,9 +30,9 @@ describe('SummaryMemoryProvider', () => {
     prisma = {
       aiProviderConfig: {
         findUnique: jest.fn().mockResolvedValue({
-          id: 'cfg-1',
+          id: "cfg-1",
           provider: AiProvider.OPENAI,
-          encryptedCredentials: 'enc',
+          encryptedCredentials: "enc",
         }),
       },
       conversationSummary: {
@@ -40,7 +45,7 @@ describe('SummaryMemoryProvider', () => {
     };
 
     credentialService = {
-      decryptCredentials: jest.fn().mockReturnValue({ apiKey: 'sk' }),
+      decryptCredentials: jest.fn().mockReturnValue({ apiKey: "sk" }),
     };
 
     eventBus = {
@@ -62,11 +67,11 @@ describe('SummaryMemoryProvider', () => {
     contextBuilder = module.get<ContextBuilder>(ContextBuilder);
   });
 
-  describe('shouldSummarize', () => {
-    it('should return true if unsummarized messages count meets summaryInterval threshold', async () => {
+  describe("shouldSummarize", () => {
+    it("should return true if unsummarized messages count meets summaryInterval threshold", async () => {
       const mockConv: any = {
         summaryInterval: 2,
-        messages: [{ id: 'm1' }, { id: 'm2' }],
+        messages: [{ id: "m1" }, { id: "m2" }],
         summaries: [],
       };
 
@@ -74,10 +79,10 @@ describe('SummaryMemoryProvider', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if unsummarized messages count is below summaryInterval', async () => {
+    it("should return false if unsummarized messages count is below summaryInterval", async () => {
       const mockConv: any = {
         summaryInterval: 5,
-        messages: [{ id: 'm1' }, { id: 'm2' }],
+        messages: [{ id: "m1" }, { id: "m2" }],
         summaries: [],
       };
 
@@ -86,15 +91,15 @@ describe('SummaryMemoryProvider', () => {
     });
   });
 
-  describe('summarize', () => {
-    it('should call LLM and persist conversation summary version', async () => {
+  describe("summarize", () => {
+    it("should call LLM and persist conversation summary version", async () => {
       const mockConv: any = {
-        id: 'conv-123',
-        providerConfigId: 'cfg-1',
-        model: 'gpt-4o',
+        id: "conv-123",
+        providerConfigId: "cfg-1",
+        model: "gpt-4o",
         messages: [
-          { id: 'm1', role: 'user', content: 'Hello' },
-          { id: 'm2', role: 'assistant', content: 'Hi!' },
+          { id: "m1", role: "user", content: "Hello" },
+          { id: "m2", role: "assistant", content: "Hi!" },
         ],
         summaries: [],
       };
@@ -103,11 +108,11 @@ describe('SummaryMemoryProvider', () => {
 
       expect(prisma.conversationSummary.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          conversationId: 'conv-123',
+          conversationId: "conv-123",
           version: 1,
-          summary: 'Mocked Summary Text',
-          startMessageId: 'm1',
-          endMessageId: 'm2',
+          summary: "Mocked Summary Text",
+          startMessageId: "m1",
+          endMessageId: "m2",
         }),
       });
 

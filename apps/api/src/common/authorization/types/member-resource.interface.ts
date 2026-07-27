@@ -1,4 +1,4 @@
-import { OrgRole } from '@aiops-hub/db';
+import { OrgRole } from "@aiops-hub/db";
 
 export interface MemberResource {
   id: string;

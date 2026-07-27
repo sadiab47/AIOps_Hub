@@ -1,5 +1,5 @@
-import { RequestContext } from '../../auth/request-context.interface';
-import { PolicyResult, allow, deny } from '../types/policy-result.interface';
+import { RequestContext } from "../../auth/request-context.interface";
+import { PolicyResult, allow, deny } from "../types/policy-result.interface";
 
 export class OrganizationPolicy {
   /**
@@ -11,7 +11,7 @@ export class OrganizationPolicy {
     targetOrganizationId: string,
   ): PolicyResult {
     if (targetOrganizationId !== actorCtx.organizationId) {
-      return deny('Organization settings access denied', 'TENANT_MISMATCH');
+      return deny("Organization settings access denied", "TENANT_MISMATCH");
     }
 
     return allow();

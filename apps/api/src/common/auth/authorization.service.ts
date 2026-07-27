@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { OrgRole } from '@aiops-hub/db';
-import { Permission, WILDCARD_PERMISSION } from '../constants/permissions';
-import { getPermissionsForRole } from '../constants/role-permission-matrix';
-import { RequestContext } from './request-context.interface';
-import { MemberResource } from '../authorization/types/member-resource.interface';
-import { InvitationResource } from '../authorization/types/invitation-resource.interface';
-import { PolicyResult } from '../authorization/types/policy-result.interface';
-import { MemberPolicy } from '../authorization/policies/member.policy';
-import { InvitationPolicy } from '../authorization/policies/invitation.policy';
-import { OrganizationPolicy } from '../authorization/policies/organization.policy';
+import { Injectable } from "@nestjs/common";
+import { OrgRole } from "@aiops-hub/db";
+import { Permission, WILDCARD_PERMISSION } from "../constants/permissions";
+import { getPermissionsForRole } from "../constants/role-permission-matrix";
+import { RequestContext } from "./request-context.interface";
+import { MemberResource } from "../authorization/types/member-resource.interface";
+import { InvitationResource } from "../authorization/types/invitation-resource.interface";
+import { PolicyResult } from "../authorization/types/policy-result.interface";
+import { MemberPolicy } from "../authorization/policies/member.policy";
+import { InvitationPolicy } from "../authorization/policies/invitation.policy";
+import { OrganizationPolicy } from "../authorization/policies/organization.policy";
 
 @Injectable()
 export class AuthorizationService {
@@ -32,7 +32,9 @@ export class AuthorizationService {
     if (userPermissions.includes(WILDCARD_PERMISSION)) {
       return true;
     }
-    return requiredPermissions.every((required) => userPermissions.includes(required));
+    return requiredPermissions.every((required) =>
+      userPermissions.includes(required),
+    );
   }
 
   /**
@@ -46,7 +48,9 @@ export class AuthorizationService {
     if (userPermissions.includes(WILDCARD_PERMISSION)) {
       return true;
     }
-    return requiredPermissions.some((required) => userPermissions.includes(required));
+    return requiredPermissions.some((required) =>
+      userPermissions.includes(required),
+    );
   }
 
   // ── Resource Policies (Delegated Facade) ──────────────────────────

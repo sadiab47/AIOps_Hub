@@ -6,8 +6,8 @@ Only the latest version of AIOps Hub is currently supported with security update
 
 | Version | Supported |
 | ------- | --------- |
-| Main    | ✅ Yes     |
-| < 1.0.0 | ❌ No      |
+| Main    | ✅ Yes    |
+| < 1.0.0 | ❌ No     |
 
 ## Reporting a Vulnerability
 

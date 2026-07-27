@@ -1,11 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, BadRequestException, NotFoundException } from '@nestjs/common';
-import { TenantContextGuard } from '../../../common/auth/tenant-context.guard';
-import { AuthorizationService } from '../../../common/auth/authorization.service';
-import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
-import { OrgRole } from '@aiops-hub/db';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  ExecutionContext,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
+import { TenantContextGuard } from "../../../common/auth/tenant-context.guard";
+import { AuthorizationService } from "../../../common/auth/authorization.service";
+import {
+  ORGANIZATION_REPOSITORY_TOKEN,
+  OrganizationRepositoryInterface,
+} from "../repositories/organization-repository.interface";
+import { OrgRole } from "@aiops-hub/db";
 
-describe('TenantContextGuard', () => {
+describe("TenantContextGuard", () => {
   let guard: TenantContextGuard;
   let organizationRepository: jest.Mocked<OrganizationRepositoryInterface>;
 
@@ -32,7 +39,10 @@ describe('TenantContextGuard', () => {
     organizationRepository = module.get(ORGANIZATION_REPOSITORY_TOKEN);
   });
 
-  const createMockContext = (headers: Record<string, string>, reqProperties: Record<string, any> = {}): ExecutionContext => {
+  const createMockContext = (
+    headers: Record<string, string>,
+    reqProperties: Record<string, any> = {},
+  ): ExecutionContext => {
     const req = {
       headers,
       ...reqProperties,
@@ -44,34 +54,45 @@ describe('TenantContextGuard', () => {
     } as unknown as ExecutionContext;
   };
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(guard).toBeDefined();
   });
 
-  it('should throw BadRequestException if header x-organization-id is missing', async () => {
+  it("should throw BadRequestException if header x-organization-id is missing", async () => {
     const context = createMockContext({});
-    await expect(guard.canActivate(context)).rejects.toThrow(BadRequestException);
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
-  it('should throw BadRequestException if header x-organization-id is not a valid UUID', async () => {
-    const context = createMockContext({ 'x-organization-id': 'invalid-uuid' });
-    await expect(guard.canActivate(context)).rejects.toThrow(BadRequestException);
+  it("should throw BadRequestException if header x-organization-id is not a valid UUID", async () => {
+    const context = createMockContext({ "x-organization-id": "invalid-uuid" });
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
-  it('should throw NotFoundException if organization is not found in database', async () => {
-    const validUuid = '12345678-1234-1234-1234-1234567890ab';
+  it("should throw NotFoundException if organization is not found in database", async () => {
+    const validUuid = "12345678-1234-1234-1234-1234567890ab";
     organizationRepository.findById.mockResolvedValue(null);
-    const context = createMockContext({ 'x-organization-id': validUuid });
+    const context = createMockContext({ "x-organization-id": validUuid });
 
     await expect(guard.canActivate(context)).rejects.toThrow(NotFoundException);
     expect(organizationRepository.findById).toHaveBeenCalledWith(validUuid);
   });
 
-  it('should set request.context.organizationId and return true if organization exists', async () => {
-    const validUuid = '12345678-1234-1234-1234-1234567890ab';
-    organizationRepository.findById.mockResolvedValue({ id: validUuid, name: 'Acme', slug: 'acme' } as any);
+  it("should set request.context.organizationId and return true if organization exists", async () => {
+    const validUuid = "12345678-1234-1234-1234-1234567890ab";
+    organizationRepository.findById.mockResolvedValue({
+      id: validUuid,
+      name: "Acme",
+      slug: "acme",
+    } as any);
     const reqProps = { context: {} };
-    const context = createMockContext({ 'x-organization-id': validUuid }, reqProps);
+    const context = createMockContext(
+      { "x-organization-id": validUuid },
+      reqProps,
+    );
 
     const result = await guard.canActivate(context);
 
@@ -79,30 +100,33 @@ describe('TenantContextGuard', () => {
     expect(result).toBe(true);
     expect(req.context).toEqual({
       organizationId: validUuid,
-      organizationName: 'Acme',
-      organizationSlug: 'acme',
+      organizationName: "Acme",
+      organizationSlug: "acme",
       organizationRole: undefined,
       organizationSettings: null,
       permissions: [],
     });
   });
 
-  it('should populate request.context.permissions based on membership.role', async () => {
-    const validUuid = '12345678-1234-1234-1234-1234567890ab';
+  it("should populate request.context.permissions based on membership.role", async () => {
+    const validUuid = "12345678-1234-1234-1234-1234567890ab";
     organizationRepository.findOrganizationContext.mockResolvedValue({
-      organization: { id: validUuid, name: 'Acme', slug: 'acme' },
+      organization: { id: validUuid, name: "Acme", slug: "acme" },
       membership: { role: OrgRole.ADMIN },
       settings: null,
     } as any);
 
-    const reqProps = { context: { userId: 'user-1' } };
-    const context = createMockContext({ 'x-organization-id': validUuid }, reqProps);
+    const reqProps = { context: { userId: "user-1" } };
+    const context = createMockContext(
+      { "x-organization-id": validUuid },
+      reqProps,
+    );
 
     await guard.canActivate(context);
 
     const req = context.switchToHttp().getRequest();
     expect(req.context.organizationRole).toBe(OrgRole.ADMIN);
-    expect(req.context.permissions).toContain('member:remove');
-    expect(req.context.permissions).toContain('settings:update');
+    expect(req.context.permissions).toContain("member:remove");
+    expect(req.context.permissions).toContain("settings:update");
   });
 });

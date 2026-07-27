@@ -1,13 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import {
   PERMISSIONS_KEY,
   PERMISSIONS_MODE_KEY,
   PermissionMode,
-} from './require-permissions.decorator';
-import { Permission } from '../constants/permissions';
-import { RequestContext } from './request-context.interface';
-import { AuthorizationService } from './authorization.service';
+} from "./require-permissions.decorator";
+import { Permission } from "../constants/permissions";
+import { RequestContext } from "./request-context.interface";
+import { AuthorizationService } from "./authorization.service";
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -37,18 +42,24 @@ export class PermissionGuard implements CanActivate {
     const reqContext = request.context as RequestContext | undefined;
 
     if (!reqContext || !reqContext.permissions) {
-      throw new ForbiddenException('Access denied: Missing tenant context');
+      throw new ForbiddenException("Access denied: Missing tenant context");
     }
 
     const userPermissions = reqContext.permissions;
     const isAuthorized =
       mode === PermissionMode.ANY
-        ? this.authorizationService.hasAnyPermission(requiredPermissions, userPermissions)
-        : this.authorizationService.hasPermissions(requiredPermissions, userPermissions);
+        ? this.authorizationService.hasAnyPermission(
+            requiredPermissions,
+            userPermissions,
+          )
+        : this.authorizationService.hasPermissions(
+            requiredPermissions,
+            userPermissions,
+          );
 
     if (!isAuthorized) {
       throw new ForbiddenException(
-        `Access denied: Insufficient permissions [${requiredPermissions.join(', ')}]`,
+        `Access denied: Insufficient permissions [${requiredPermissions.join(", ")}]`,
       );
     }
 

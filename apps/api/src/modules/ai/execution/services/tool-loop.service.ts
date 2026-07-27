@@ -1,8 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ToolResolver } from '../../tools/services/tool-resolver.service';
-import { ToolExecutor } from '../../tools/services/tool-executor.service';
-import { ToolInvokedEvent, ToolCompletedEvent } from '../events/execution.events';
+import { Injectable, Logger } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ToolResolver } from "../../tools/services/tool-resolver.service";
+import { ToolExecutor } from "../../tools/services/tool-executor.service";
+import {
+  ToolInvokedEvent,
+  ToolCompletedEvent,
+} from "../events/execution.events";
 
 @Injectable()
 export class ToolLoopService {
@@ -25,17 +28,21 @@ export class ToolLoopService {
 
     for (const call of toolCalls) {
       const toolId = call.function?.name || call.name;
-      const input = typeof call.function?.arguments === 'string'
-        ? JSON.parse(call.function.arguments)
-        : call.arguments || call.input;
+      const input =
+        typeof call.function?.arguments === "string"
+          ? JSON.parse(call.function.arguments)
+          : call.arguments || call.input;
 
       if (!allowedToolIds.includes(toolId)) {
         throw new Error(`Tool unauthorized: ${toolId}`);
       }
 
-      this.eventEmitter.emit('tool.invoked', new ToolInvokedEvent(executionId, toolId, input));
+      this.eventEmitter.emit(
+        "tool.invoked",
+        new ToolInvokedEvent(executionId, toolId, input),
+      );
       if (onSseEvent) {
-        onSseEvent('tool', { toolId, input });
+        onSseEvent("tool", { toolId, input });
       }
 
       const toolStartTime = Date.now();
@@ -51,17 +58,20 @@ export class ToolLoopService {
       }
 
       const toolLatency = Date.now() - toolStartTime;
-      this.eventEmitter.emit('tool.completed', new ToolCompletedEvent(executionId, toolId, output, toolLatency));
-      
+      this.eventEmitter.emit(
+        "tool.completed",
+        new ToolCompletedEvent(executionId, toolId, output, toolLatency),
+      );
+
       if (onSseEvent) {
-        onSseEvent('tool-result', { toolId, output, latencyMs: toolLatency });
+        onSseEvent("tool-result", { toolId, output, latencyMs: toolLatency });
       }
 
       toolOutputs.push({
         tool_call_id: call.id,
-        role: 'tool',
+        role: "tool",
         name: toolId,
-        content: typeof output === 'string' ? output : JSON.stringify(output),
+        content: typeof output === "string" ? output : JSON.stringify(output),
       });
     }
 

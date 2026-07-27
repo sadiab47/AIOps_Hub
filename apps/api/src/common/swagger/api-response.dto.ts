@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class ApiResponseEnvelopeDto<T> {
   @ApiProperty({ example: true })
@@ -8,17 +8,17 @@ export class ApiResponseEnvelopeDto<T> {
   data!: T;
 
   @ApiProperty({
-    example: { timestamp: '2026-07-21T10:52:00.000Z' },
+    example: { timestamp: "2026-07-21T10:52:00.000Z" },
     required: false,
   })
   meta?: Record<string, any>;
 }
 
 export class ApiErrorDetailDto {
-  @ApiProperty({ example: 'FORBIDDEN' })
+  @ApiProperty({ example: "FORBIDDEN" })
   code!: string;
 
-  @ApiProperty({ example: 'You do not have permission to perform this action' })
+  @ApiProperty({ example: "You do not have permission to perform this action" })
   message!: string;
 }
 
@@ -29,9 +29,9 @@ export class ApiErrorEnvelopeDto {
   @ApiProperty({ type: ApiErrorDetailDto })
   error!: ApiErrorDetailDto;
 
-  @ApiProperty({ example: 'req-12345', required: false })
+  @ApiProperty({ example: "req-12345", required: false })
   requestId?: string;
 
-  @ApiProperty({ example: '2026-07-21T10:52:00.000Z' })
+  @ApiProperty({ example: "2026-07-21T10:52:00.000Z" })
   timestamp!: string;
 }

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { Conversation, Message, MessageRole } from '@aiops-hub/db';
-import { ChatMessageInput } from '../../../common/ai/types/ai-provider.interface';
-import { MemoryProvider } from './memory-provider.interface';
-import { MemoryBudget } from './memory-budget.interface';
-import { ContextBuilder } from './context-builder';
+import { Injectable } from "@nestjs/common";
+import { Conversation, Message, MessageRole } from "@aiops-hub/db";
+import { ChatMessageInput } from "../../../common/ai/types/ai-provider.interface";
+import { MemoryProvider } from "./memory-provider.interface";
+import { MemoryBudget } from "./memory-budget.interface";
+import { ContextBuilder } from "./context-builder";
 
 @Injectable()
 export class SlidingWindowMemoryProvider implements MemoryProvider {
@@ -17,7 +17,10 @@ export class SlidingWindowMemoryProvider implements MemoryProvider {
     const rawMessages = conversation.messages;
 
     // 2. Trim older message history to fit in budget.maxHistoryTokens
-    const trimmedHistory = this.trimToBudget(rawMessages, budget.maxHistoryTokens);
+    const trimmedHistory = this.trimToBudget(
+      rawMessages,
+      budget.maxHistoryTokens,
+    );
 
     // 3. Assemble and return context (sliding window uses no summaries)
     return this.contextBuilder.assemble(
@@ -48,7 +51,10 @@ export class SlidingWindowMemoryProvider implements MemoryProvider {
 
     const workingHistory = [...messages];
     // Remove oldest messages first
-    while (workingHistory.length > 0 && this.estimateTokenCount(workingHistory) > limit) {
+    while (
+      workingHistory.length > 0 &&
+      this.estimateTokenCount(workingHistory) > limit
+    ) {
       workingHistory.shift();
     }
     return workingHistory;

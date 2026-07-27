@@ -1,6 +1,6 @@
-import { AiUsageLog, Prisma } from '@aiops-hub/db';
+import { AiUsageLog, Prisma } from "@aiops-hub/db";
 
-export const USAGE_REPOSITORY_TOKEN = Symbol('USAGE_REPOSITORY_TOKEN');
+export const USAGE_REPOSITORY_TOKEN = Symbol("USAGE_REPOSITORY_TOKEN");
 
 export interface UsageSummary {
   requests: number;
@@ -31,7 +31,11 @@ export interface DailyTrend {
 export interface UsageRepositoryInterface {
   createLog(data: Prisma.AiUsageLogCreateInput): Promise<AiUsageLog>;
 
-  getSummary(orgId: string, startDate?: Date, endDate?: Date): Promise<UsageSummary>;
+  getSummary(
+    orgId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<UsageSummary>;
 
   getProviderDistribution(orgId: string): Promise<GroupedMetrics[]>;
 
@@ -43,7 +47,9 @@ export interface UsageRepositoryInterface {
 
   getUserUsage(orgId: string, userId: string): Promise<UsageSummary>;
 
-  getLatencyMetrics(orgId: string): Promise<{ averageLatencyMs: number; maxLatencyMs: number }>;
+  getLatencyMetrics(
+    orgId: string,
+  ): Promise<{ averageLatencyMs: number; maxLatencyMs: number }>;
 
   getStatusDistribution(orgId: string): Promise<GroupedMetrics[]>;
 

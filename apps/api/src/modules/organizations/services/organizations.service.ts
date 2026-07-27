@@ -1,22 +1,40 @@
-import { Injectable, Inject, ForbiddenException, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { ORGANIZATION_REPOSITORY_TOKEN, OrganizationRepositoryInterface } from '../repositories/organization-repository.interface';
-import { MEMBER_REPOSITORY_TOKEN, MemberRepositoryInterface } from '../repositories/member-repository.interface';
-import { Organization, OrgRole } from '@aiops-hub/db';
-import { RESERVED_SLUGS } from '../../../common/constants/reserved-slugs';
-import { EventBusService } from '../../../common/events/event-bus.service';
-import { getPermissionsForRole } from '../../../common/constants/role-permission-matrix';
-import { OrganizationCreatedEvent, OrganizationUpdatedEvent, OrganizationSettingsUpdatedEvent, SlugChangedEvent } from '../../../common/events/types/organization.events';
+import {
+  Injectable,
+  Inject,
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
+import {
+  ORGANIZATION_REPOSITORY_TOKEN,
+  OrganizationRepositoryInterface,
+} from "../repositories/organization-repository.interface";
+import {
+  MEMBER_REPOSITORY_TOKEN,
+  MemberRepositoryInterface,
+} from "../repositories/member-repository.interface";
+import { Organization, OrgRole } from "@aiops-hub/db";
+import { RESERVED_SLUGS } from "../../../common/constants/reserved-slugs";
+import { EventBusService } from "../../../common/events/event-bus.service";
+import { getPermissionsForRole } from "../../../common/constants/role-permission-matrix";
+import {
+  OrganizationCreatedEvent,
+  OrganizationUpdatedEvent,
+  OrganizationSettingsUpdatedEvent,
+  SlugChangedEvent,
+} from "../../../common/events/types/organization.events";
 
 export function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+    .replace(/\-\-+/g, "-") // Replace multiple - with single -
+    .replace(/^-+/, "") // Trim - from start of text
+    .replace(/-+$/, ""); // Trim - from end of text
 }
 
 @Injectable()
@@ -35,7 +53,7 @@ export class OrganizationsService {
     ipAddress?: string | null,
     userAgent?: string | null,
   ): Promise<Organization> {
-    const baseSlug = slugify(name) || 'org';
+    const baseSlug = slugify(name) || "org";
     let slug = baseSlug;
     let suffix = 2;
 
@@ -49,17 +67,22 @@ export class OrganizationsService {
       userId,
     );
 
-    this.eventBus.publish(new OrganizationCreatedEvent({
-      id: org.id,
-      name: org.name,
-      slug: org.slug,
-      ownerUserId: userId,
-    }, {
-      userId,
-      ipAddress,
-      userAgent,
-      organizationId: org.id,
-    }));
+    this.eventBus.publish(
+      new OrganizationCreatedEvent(
+        {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          ownerUserId: userId,
+        },
+        {
+          userId,
+          ipAddress,
+          userAgent,
+          organizationId: org.id,
+        },
+      ),
+    );
 
     return org;
   }
@@ -69,10 +92,15 @@ export class OrganizationsService {
   }
 
   async switchOrganization(userId: string, orgId: string) {
-    const context = await this.organizationRepository.findOrganizationContext(userId, orgId);
+    const context = await this.organizationRepository.findOrganizationContext(
+      userId,
+      orgId,
+    );
 
     if (!context) {
-      throw new ForbiddenException('You do not have access to this organization');
+      throw new ForbiddenException(
+        "You do not have access to this organization",
+      );
     }
 
     // TODO: Switch safety checks
@@ -86,13 +114,15 @@ export class OrganizationsService {
       slug: context.organization.slug,
       role: context.membership.role,
       permissions: getPermissionsForRole(context.membership.role as OrgRole),
-      settings: context.settings ? {
-        timezone: context.settings.timezone,
-        locale: context.settings.locale,
-      } : {
-        timezone: 'UTC',
-        locale: 'en',
-      },
+      settings: context.settings
+        ? {
+            timezone: context.settings.timezone,
+            locale: context.settings.locale,
+          }
+        : {
+            timezone: "UTC",
+            locale: "en",
+          },
     };
   }
 
@@ -104,14 +134,22 @@ export class OrganizationsService {
     userAgent?: string | null,
   ) {
     // 1. Authorize: User must be OWNER or ADMIN of the organization
-    const membership = await this.memberRepository.findMembership(userId, orgId);
-    if (!membership || (membership.role !== OrgRole.OWNER && membership.role !== OrgRole.ADMIN)) {
-      throw new ForbiddenException('You do not have administrative access to this organization');
+    const membership = await this.memberRepository.findMembership(
+      userId,
+      orgId,
+    );
+    if (
+      !membership ||
+      (membership.role !== OrgRole.OWNER && membership.role !== OrgRole.ADMIN)
+    ) {
+      throw new ForbiddenException(
+        "You do not have administrative access to this organization",
+      );
     }
 
     const org = await this.organizationRepository.findById(orgId);
     if (!org) {
-      throw new NotFoundException('Organization not found');
+      throw new NotFoundException("Organization not found");
     }
 
     const orgUpdateData: any = {};
@@ -119,7 +157,12 @@ export class OrganizationsService {
 
     // 2. Process profile if present
     if (dto.profile) {
-      await this.updateOrganizationProfile(orgId, dto.profile, org, orgUpdateData);
+      await this.updateOrganizationProfile(
+        orgId,
+        dto.profile,
+        org,
+        orgUpdateData,
+      );
     }
 
     // 3. Process settings if present
@@ -128,8 +171,15 @@ export class OrganizationsService {
     }
 
     // If no changes, return without transaction to avoid no-op query overhead
-    if (Object.keys(orgUpdateData).length === 0 && Object.keys(settingsUpdateData).length === 0) {
-      const activeCtx = await this.organizationRepository.findOrganizationContext(userId, orgId);
+    if (
+      Object.keys(orgUpdateData).length === 0 &&
+      Object.keys(settingsUpdateData).length === 0
+    ) {
+      const activeCtx =
+        await this.organizationRepository.findOrganizationContext(
+          userId,
+          orgId,
+        );
       return {
         organization: activeCtx?.organization,
         settings: activeCtx?.settings,
@@ -146,26 +196,41 @@ export class OrganizationsService {
     const correlation = { userId, ipAddress, userAgent, organizationId: orgId };
 
     if (orgUpdateData.name !== undefined) {
-      this.eventBus.publish(new OrganizationUpdatedEvent({
-        id: orgId,
-        oldName: org.name,
-        newName: orgUpdateData.name,
-      }, correlation));
+      this.eventBus.publish(
+        new OrganizationUpdatedEvent(
+          {
+            id: orgId,
+            oldName: org.name,
+            newName: orgUpdateData.name,
+          },
+          correlation,
+        ),
+      );
     }
 
     if (orgUpdateData.slug !== undefined) {
-      this.eventBus.publish(new SlugChangedEvent({
-        id: orgId,
-        oldSlug: org.slug,
-        newSlug: orgUpdateData.slug,
-      }, correlation));
+      this.eventBus.publish(
+        new SlugChangedEvent(
+          {
+            id: orgId,
+            oldSlug: org.slug,
+            newSlug: orgUpdateData.slug,
+          },
+          correlation,
+        ),
+      );
     }
 
     if (Object.keys(settingsUpdateData).length > 0) {
-      this.eventBus.publish(new OrganizationSettingsUpdatedEvent({
-        id: orgId,
-        changedFields: settingsUpdateData,
-      }, correlation));
+      this.eventBus.publish(
+        new OrganizationSettingsUpdatedEvent(
+          {
+            id: orgId,
+            changedFields: settingsUpdateData,
+          },
+          correlation,
+        ),
+      );
     }
 
     return result;
@@ -185,23 +250,30 @@ export class OrganizationsService {
       // Validate Slug Regex
       const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
       if (!slugRegex.test(profileDto.slug)) {
-        throw new BadRequestException('Slug must be lowercase alphanumeric characters and single hyphens only, and cannot start/end with a hyphen');
+        throw new BadRequestException(
+          "Slug must be lowercase alphanumeric characters and single hyphens only, and cannot start/end with a hyphen",
+        );
       }
 
       // Length Checks
       if (profileDto.slug.length < 3 || profileDto.slug.length > 50) {
-        throw new BadRequestException('Slug must be between 3 and 50 characters');
+        throw new BadRequestException(
+          "Slug must be between 3 and 50 characters",
+        );
       }
 
       // Check Reserved List
       if (RESERVED_SLUGS.includes(profileDto.slug)) {
-        throw new BadRequestException('This organization slug is reserved');
+        throw new BadRequestException("This organization slug is reserved");
       }
 
       // Check Uniqueness
-      const exists = await this.organizationRepository.existsBySlugExcept(profileDto.slug, orgId);
+      const exists = await this.organizationRepository.existsBySlugExcept(
+        profileDto.slug,
+        orgId,
+      );
       if (exists) {
-        throw new ConflictException('This slug is already taken');
+        throw new ConflictException("This slug is already taken");
       }
 
       orgUpdateData.slug = profileDto.slug;
@@ -213,32 +285,36 @@ export class OrganizationsService {
     settingsUpdateData: any,
   ) {
     const fields = [
-      'timezone',
-      'locale',
-      'logoUrl',
-      'brandingColor',
-      'defaultAiProvider',
-      'defaultAiModel',
-      'defaultAiTemperature',
-      'defaultEmbeddingModel',
-      'allowPublicInvitations',
-      'retentionDays',
+      "timezone",
+      "locale",
+      "logoUrl",
+      "brandingColor",
+      "defaultAiProvider",
+      "defaultAiModel",
+      "defaultAiTemperature",
+      "defaultEmbeddingModel",
+      "allowPublicInvitations",
+      "retentionDays",
     ];
 
     for (const field of fields) {
       if (settingsDto[field] !== undefined) {
         // Branding color validation
-        if (field === 'brandingColor' && settingsDto[field] !== null) {
+        if (field === "brandingColor" && settingsDto[field] !== null) {
           const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
           if (!hexRegex.test(settingsDto[field])) {
-            throw new BadRequestException('Branding color must be a valid hex color code (e.g. #RGB or #RRGGBB)');
+            throw new BadRequestException(
+              "Branding color must be a valid hex color code (e.g. #RGB or #RRGGBB)",
+            );
           }
         }
 
         // Logo URL validation
-        if (field === 'logoUrl' && settingsDto[field] !== null) {
-          if (!settingsDto[field].startsWith('https://')) {
-            throw new BadRequestException('Logo URL must be a secure HTTPS link');
+        if (field === "logoUrl" && settingsDto[field] !== null) {
+          if (!settingsDto[field].startsWith("https://")) {
+            throw new BadRequestException(
+              "Logo URL must be a secure HTTPS link",
+            );
           }
         }
 

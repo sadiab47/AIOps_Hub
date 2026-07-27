@@ -1,9 +1,9 @@
 ---
 name: Architecture proposal
 about: Propose changes or additions to system design and architecture
-title: 'arch: '
+title: "arch: "
 labels: architecture
-assignees: ''
+assignees: ""
 ---
 
 **Proposed Architectural Change**

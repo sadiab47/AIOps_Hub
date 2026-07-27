@@ -1,10 +1,10 @@
-import { DomainEvent, EventCorrelationContext } from '../domain-event';
+import { DomainEvent, EventCorrelationContext } from "../domain-event";
 
-export const EVENT_NAME_PROVIDER_CONFIGURED = 'provider.configured';
-export const EVENT_NAME_PROVIDER_UPDATED = 'provider.updated';
-export const EVENT_NAME_PROVIDER_DELETED = 'provider.deleted';
-export const EVENT_NAME_PROVIDER_VALIDATED = 'provider.validated';
-export const EVENT_NAME_DEFAULT_PROVIDER_CHANGED = 'provider.default_changed';
+export const EVENT_NAME_PROVIDER_CONFIGURED = "provider.configured";
+export const EVENT_NAME_PROVIDER_UPDATED = "provider.updated";
+export const EVENT_NAME_PROVIDER_DELETED = "provider.deleted";
+export const EVENT_NAME_PROVIDER_VALIDATED = "provider.validated";
+export const EVENT_NAME_DEFAULT_PROVIDER_CHANGED = "provider.default_changed";
 
 export class ProviderConfiguredEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_PROVIDER_CONFIGURED;

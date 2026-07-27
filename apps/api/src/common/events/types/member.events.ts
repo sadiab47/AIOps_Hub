@@ -1,5 +1,5 @@
-import { DomainEvent } from '../domain-event';
-import { OrgRole } from '@aiops-hub/db';
+import { DomainEvent } from "../domain-event";
+import { OrgRole } from "@aiops-hub/db";
 
 // ── Existing events (ORG-002) ────────────────────────────────────────────────
 
@@ -8,7 +8,7 @@ export class MemberJoinedEvent extends DomainEvent<{
   userId: string;
   role: OrgRole;
 }> {
-  static readonly EVENT_NAME = 'MEMBER_JOINED';
+  static readonly EVENT_NAME = "MEMBER_JOINED";
   readonly eventName = MemberJoinedEvent.EVENT_NAME;
 }
 
@@ -18,7 +18,7 @@ export class InvitationAcceptedEvent extends DomainEvent<{
   email: string;
   role: OrgRole;
 }> {
-  static readonly EVENT_NAME = 'INVITATION_ACCEPTED';
+  static readonly EVENT_NAME = "INVITATION_ACCEPTED";
   readonly eventName = InvitationAcceptedEvent.EVENT_NAME;
 }
 
@@ -27,7 +27,7 @@ export class InvitationRevokedEvent extends DomainEvent<{
   organizationId: string;
   revokedByUserId: string;
 }> {
-  static readonly EVENT_NAME = 'INVITATION_REVOKED';
+  static readonly EVENT_NAME = "INVITATION_REVOKED";
   readonly eventName = InvitationRevokedEvent.EVENT_NAME;
 }
 
@@ -46,7 +46,7 @@ export class MemberRoleChangedEvent extends DomainEvent<{
   newRole: OrgRole;
   actorUserId: string;
 }> {
-  static readonly EVENT_NAME = 'MEMBER_ROLE_CHANGED';
+  static readonly EVENT_NAME = "MEMBER_ROLE_CHANGED";
   readonly eventName = MemberRoleChangedEvent.EVENT_NAME;
 }
 
@@ -57,7 +57,7 @@ export class MemberRemovedEvent extends DomainEvent<{
   userId: string;
   actorUserId: string;
 }> {
-  static readonly EVENT_NAME = 'MEMBER_REMOVED';
+  static readonly EVENT_NAME = "MEMBER_REMOVED";
   readonly eventName = MemberRemovedEvent.EVENT_NAME;
 }
 
@@ -73,7 +73,7 @@ export class OwnershipTransferredEvent extends DomainEvent<{
   toMemberId: string;
   actorUserId: string;
 }> {
-  static readonly EVENT_NAME = 'OWNERSHIP_TRANSFERRED';
+  static readonly EVENT_NAME = "OWNERSHIP_TRANSFERRED";
   readonly eventName = OwnershipTransferredEvent.EVENT_NAME;
 }
 
@@ -83,6 +83,6 @@ export class MemberLeftEvent extends DomainEvent<{
   organizationId: string;
   userId: string;
 }> {
-  static readonly EVENT_NAME = 'MEMBER_LEFT';
+  static readonly EVENT_NAME = "MEMBER_LEFT";
   readonly eventName = MemberLeftEvent.EVENT_NAME;
 }

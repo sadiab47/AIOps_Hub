@@ -29,7 +29,7 @@ export interface TokenUsage {
 }
 
 export interface ChatMessageInput {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
 }
 

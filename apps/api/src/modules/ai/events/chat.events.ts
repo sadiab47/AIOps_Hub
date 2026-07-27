@@ -1,10 +1,13 @@
-import { MessageRole } from '@aiops-hub/db';
-import { DomainEvent, EventCorrelationContext } from '../../../common/events/domain-event';
+import { MessageRole } from "@aiops-hub/db";
+import {
+  DomainEvent,
+  EventCorrelationContext,
+} from "../../../common/events/domain-event";
 
-export const EVENT_NAME_MESSAGE_SENT = 'chat.message_sent';
-export const EVENT_NAME_MESSAGE_STREAMED = 'chat.message_streamed';
-export const EVENT_NAME_CONVERSATION_COMPLETED = 'chat.conversation_completed';
-export const EVENT_NAME_CONVERSATION_CANCELLED = 'chat.conversation_cancelled';
+export const EVENT_NAME_MESSAGE_SENT = "chat.message_sent";
+export const EVENT_NAME_MESSAGE_STREAMED = "chat.message_streamed";
+export const EVENT_NAME_CONVERSATION_COMPLETED = "chat.conversation_completed";
+export const EVENT_NAME_CONVERSATION_CANCELLED = "chat.conversation_cancelled";
 
 export class MessageSentEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_MESSAGE_SENT;
@@ -64,9 +67,10 @@ export class ConversationCancelledEvent implements DomainEvent {
   ) {}
 }
 
-export const EVENT_NAME_CONVERSATION_SUMMARIZED = 'chat.conversation_summarized';
-export const EVENT_NAME_MEMORY_COMPRESSED = 'chat.memory_compressed';
-export const EVENT_NAME_CONTEXT_BUILT = 'chat.context_built';
+export const EVENT_NAME_CONVERSATION_SUMMARIZED =
+  "chat.conversation_summarized";
+export const EVENT_NAME_MEMORY_COMPRESSED = "chat.memory_compressed";
+export const EVENT_NAME_CONTEXT_BUILT = "chat.context_built";
 
 export class ConversationSummarizedEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_CONVERSATION_SUMMARIZED;
@@ -112,7 +116,7 @@ export class ContextBuiltEvent implements DomainEvent {
   ) {}
 }
 
-export const EVENT_NAME_AI_USAGE_LOGGED = 'chat.ai_usage_logged';
+export const EVENT_NAME_AI_USAGE_LOGGED = "chat.ai_usage_logged";
 
 export class AiUsageLoggedEvent implements DomainEvent {
   readonly eventName = EVENT_NAME_AI_USAGE_LOGGED;

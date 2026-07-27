@@ -1,6 +1,6 @@
-import { User, Prisma } from '@aiops-hub/db';
+import { User, Prisma } from "@aiops-hub/db";
 
-export const USER_REPOSITORY_TOKEN = 'UserRepositoryInterface';
+export const USER_REPOSITORY_TOKEN = "UserRepositoryInterface";
 
 export interface UserRepositoryInterface {
   create(data: Prisma.UserCreateInput): Promise<User>;

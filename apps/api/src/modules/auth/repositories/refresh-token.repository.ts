@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { RefreshTokenRepositoryInterface } from './refresh-token-repository.interface';
-import { RefreshToken, Prisma } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { RefreshTokenRepositoryInterface } from "./refresh-token-repository.interface";
+import { RefreshToken, Prisma } from "@aiops-hub/db";
 
 @Injectable()
 export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.RefreshTokenUncheckedCreateInput): Promise<RefreshToken> {
+  async create(
+    data: Prisma.RefreshTokenUncheckedCreateInput,
+  ): Promise<RefreshToken> {
     return this.prisma.refreshToken.create({ data });
   }
 
@@ -30,7 +32,10 @@ export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
     });
   }
 
-  async revokeAllByUser(userId: string, reason: string): Promise<Prisma.BatchPayload> {
+  async revokeAllByUser(
+    userId: string,
+    reason: string,
+  ): Promise<Prisma.BatchPayload> {
     return this.prisma.refreshToken.updateMany({
       where: {
         userId,
@@ -46,10 +51,7 @@ export class RefreshTokenRepository implements RefreshTokenRepositoryInterface {
   async deleteExpired(): Promise<Prisma.BatchPayload> {
     return this.prisma.refreshToken.deleteMany({
       where: {
-        OR: [
-          { expiresAt: { lt: new Date() } },
-          { revokedAt: { not: null } },
-        ],
+        OR: [{ expiresAt: { lt: new Date() } }, { revokedAt: { not: null } }],
       },
     });
   }

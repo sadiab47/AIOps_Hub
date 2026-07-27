@@ -1,11 +1,11 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import {
   USAGE_REPOSITORY_TOKEN,
   UsageRepositoryInterface,
   UsageSummary,
   GroupedMetrics,
   DailyTrend,
-} from '../repositories/usage-repository.interface';
+} from "../repositories/usage-repository.interface";
 
 export class UsageSummaryDto {
   requests!: number;
@@ -53,14 +53,20 @@ export class UsageAnalyticsService {
     return this.repository.getModelDistribution(orgId);
   }
 
-  async getDailyCosts(orgId: string, range?: string): Promise<DailyCostTrendDto[]> {
+  async getDailyCosts(
+    orgId: string,
+    range?: string,
+  ): Promise<DailyCostTrendDto[]> {
     let limitDays = 30;
-    if (range === '7d') limitDays = 7;
-    else if (range === '24h') limitDays = 1;
+    if (range === "7d") limitDays = 7;
+    else if (range === "24h") limitDays = 1;
     return this.repository.getDailyCosts(orgId, limitDays);
   }
 
-  async getConversationUsage(conversationId: string, orgId: string): Promise<UsageSummaryDto> {
+  async getConversationUsage(
+    conversationId: string,
+    orgId: string,
+  ): Promise<UsageSummaryDto> {
     // Assert conversation visibility within tenant scope
     return this.repository.getConversationUsage(conversationId);
   }
@@ -81,15 +87,15 @@ export class UsageAnalyticsService {
     const end = new Date();
     const start = new Date();
 
-    if (range === '24h') {
+    if (range === "24h") {
       start.setHours(start.getHours() - 24);
       return { start, end };
     }
-    if (range === '7d') {
+    if (range === "7d") {
       start.setDate(start.getDate() - 7);
       return { start, end };
     }
-    if (range === '30d') {
+    if (range === "30d") {
       start.setDate(start.getDate() - 30);
       return { start, end };
     }

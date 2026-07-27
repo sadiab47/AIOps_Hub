@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class PromptVariableEngineService {
@@ -46,8 +46,8 @@ export class PromptVariableEngineService {
     let rendered = template;
 
     for (const key of required) {
-      const val = inputs[key] ?? '';
-      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+      const val = inputs[key] ?? "";
+      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g");
       rendered = rendered.replace(regex, val);
     }
 
@@ -66,7 +66,10 @@ export class PromptVariableEngineService {
     missing: string[];
     unused: string[];
   } {
-    const { required, missing, unused } = this.validateVariables(template, inputs);
+    const { required, missing, unused } = this.validateVariables(
+      template,
+      inputs,
+    );
     const rendered = this.render(template, inputs);
 
     return {

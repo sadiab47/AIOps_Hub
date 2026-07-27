@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
-import { UserRepositoryInterface } from './user-repository.interface';
-import { User, Prisma } from '@aiops-hub/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../common/database/prisma.service";
+import { UserRepositoryInterface } from "./user-repository.interface";
+import { User, Prisma } from "@aiops-hub/db";
 
 @Injectable()
 export class UserRepository implements UserRepositoryInterface {

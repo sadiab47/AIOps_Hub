@@ -1,6 +1,8 @@
-import { AiProviderConfig, Prisma } from '@aiops-hub/db';
+import { AiProviderConfig, Prisma } from "@aiops-hub/db";
 
-export const AI_PROVIDER_REPOSITORY_TOKEN = Symbol('AI_PROVIDER_REPOSITORY_TOKEN');
+export const AI_PROVIDER_REPOSITORY_TOKEN = Symbol(
+  "AI_PROVIDER_REPOSITORY_TOKEN",
+);
 
 export interface AiProviderRepositoryInterface {
   create(

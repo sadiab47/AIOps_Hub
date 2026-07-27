@@ -1,6 +1,6 @@
-import { RequestContext } from '../../auth/request-context.interface';
-import { InvitationResource } from '../types/invitation-resource.interface';
-import { PolicyResult, allow, deny } from '../types/policy-result.interface';
+import { RequestContext } from "../../auth/request-context.interface";
+import { InvitationResource } from "../types/invitation-resource.interface";
+import { PolicyResult, allow, deny } from "../types/policy-result.interface";
 
 export class InvitationPolicy {
   /**
@@ -12,7 +12,7 @@ export class InvitationPolicy {
     invitation?: InvitationResource | null,
   ): PolicyResult {
     if (!invitation || invitation.organizationId !== actorCtx.organizationId) {
-      return deny('Invitation not found', 'NOT_FOUND');
+      return deny("Invitation not found", "NOT_FOUND");
     }
 
     return allow();

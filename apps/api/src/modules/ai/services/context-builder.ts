@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { MessageRole } from '@aiops-hub/db';
-import { ChatMessageInput } from '../../../common/ai/types/ai-provider.interface';
+import { Injectable } from "@nestjs/common";
+import { MessageRole } from "@aiops-hub/db";
+import { ChatMessageInput } from "../../../common/ai/types/ai-provider.interface";
 
 @Injectable()
 export class ContextBuilder {
@@ -17,7 +17,7 @@ export class ContextBuilder {
     // 1. Inject primary system prompt instruction
     if (systemPrompt) {
       context.push({
-        role: 'system',
+        role: "system",
         content: systemPrompt,
       });
     }
@@ -25,7 +25,7 @@ export class ContextBuilder {
     // 2. Inject latest conversation summary if present
     if (summaryText) {
       context.push({
-        role: 'system',
+        role: "system",
         content: `Summary of earlier conversation: ${summaryText}`,
       });
     }
@@ -33,15 +33,19 @@ export class ContextBuilder {
     // 3. Append messages, mapping DB MessageRole to provider string literals
     for (const msg of messages) {
       // Avoid duplicate System message if it's already injected as the primary systemPrompt
-      if (msg.role === MessageRole.SYSTEM && systemPrompt && msg.content === systemPrompt) {
+      if (
+        msg.role === MessageRole.SYSTEM &&
+        systemPrompt &&
+        msg.content === systemPrompt
+      ) {
         continue;
       }
 
-      let roleVal: 'system' | 'user' | 'assistant' = 'user';
+      let roleVal: "system" | "user" | "assistant" = "user";
       if (msg.role === MessageRole.SYSTEM) {
-        roleVal = 'system';
+        roleVal = "system";
       } else if (msg.role === MessageRole.ASSISTANT) {
-        roleVal = 'assistant';
+        roleVal = "assistant";
       }
 
       context.push({

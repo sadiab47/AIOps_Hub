@@ -1,8 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
-import { HealthCheckService, HealthCheck, PrismaHealthIndicator } from '@nestjs/terminus';
-import { PrismaService } from '../../common/database/prisma.service';
+import { Controller, Get } from "@nestjs/common";
+import {
+  HealthCheckService,
+  HealthCheck,
+  PrismaHealthIndicator,
+} from "@nestjs/terminus";
+import { PrismaService } from "../../common/database/prisma.service";
 
-@Controller('health')
+@Controller("health")
 export class HealthController {
   private readonly startTime = Date.now();
 
@@ -15,25 +19,25 @@ export class HealthController {
   @Get()
   check() {
     return {
-      status: 'OK',
-      version: '0.3.1',
+      status: "OK",
+      version: "0.3.1",
       uptime: Math.floor((Date.now() - this.startTime) / 1000),
       timestamp: new Date().toISOString(),
     };
   }
 
-  @Get('live')
+  @Get("live")
   live() {
     return {
-      status: 'OK',
+      status: "OK",
     };
   }
 
-  @Get('ready')
+  @Get("ready")
   @HealthCheck()
   async ready() {
     return this.health.check([
-      () => this.prismaIndicator.pingCheck('database', this.prisma),
+      () => this.prismaIndicator.pingCheck("database", this.prisma),
     ]);
   }
 }
