@@ -27,16 +27,17 @@ The AIOps Hub product roadmap is structured into versioned sprints, taking the a
 - Developed Conversation Memory Engine supporting context budget allocation and background summarization workers.
 - Formulated Usage & Cost Analytics platforms capturing token counts, cost estimation metrics, latency, and status groupings.
 
-### ✅ v0.4.0-beta1 — Agent Platform & Frontend Shell (In Progress)
+### ✅ v0.4.0-beta2 — Agent Playground & Stabilization (Complete)
 
 - **AGENT-001**: Agent Registry and versioning systems with optimistic locking revision counters.
 - **AGENT-002**: Tool Execution Framework (AJV schema validator, registry, resolver) and built-in tools (Calculator, DateTime, UUID Generator, JSON Utils, Text Utils, Http Client).
 - **AGENT-003**: Agent Execution Engine (loop orchestrator, SSE events execution streams, telemetry traces logs, and comprehensive integration testing coverage).
+- **AGENT-004**: Playground Chat console interface (horizontal trace pipeline pipelines, 6 collapsible inspector panel components, and speed-controlled debug replay mode).
+- **AGENT-004.1**: Playground stabilization, SSE chunk boundary hardening, and 3 passed test suites (8 specs).
+- **AGENT-005 (Next)**: Sequential Workflow automation engine.
 - **Frontend Console Layout**: React Query, Axios configured credentials instance, organization selectors, system health monitors, and user settings menus.
 - **Protected Routing**: Login/signup page integrations and middleware guarding dashboard layouts.
 - **Features UI**: Monaco Editor prompt templates workspaces, 5-step Agent creation wizards, Provider management panels (validation/duplication triggers), and Recharts Cost/Token analytics.
-- **AGENT-004 (Next)**: Playground Chat console interface.
-- **AGENT-005 (Next)**: Sequential Workflow automation engine.
 
 ### ⏳ v0.5.0 — Advanced Workflows & Integrations
 

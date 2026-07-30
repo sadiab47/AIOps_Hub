@@ -6,8 +6,8 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 
 ---
 
-[![Version](https://img.shields.io/badge/Version-v0.4.0--beta1-blue.svg)](#)
-[![Status](https://img.shields.io/badge/Status-Beta--1%20Release%20Candidate-green.svg)](#)
+[![Version](https://img.shields.io/badge/Version-v0.4.0--beta2-blue.svg)](#)
+[![Status](https://img.shields.io/badge/Status-Beta--2%20Release%20Candidate-green.svg)](#)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
@@ -34,7 +34,7 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 | :---------------- | :---------------------------- | :----------------------------------------------------------------- |
 | **Architecture**  | Monorepo / Modular Monolith   | Next.js 15 App Router, NestJS 11, Turborepo                        |
 | **Database**      | PostgreSQL & Redis            | Prisma ORM                                                         |
-| **Tests**         | 220+ Integration Specs        | 100% Passing                                                       |
+| **Tests**         | 240+ Integration Specs        | 100% Passing                                                       |
 | **Security**      | JWT Access & Stateful Refresh | Cookie-based, rotation on refresh, CSRF safeguards                 |
 | **UI Components** | Reusable UI Kit               | Monaco Editor, Recharts analytics, PageHeader, StatCard, DataTable |
 
@@ -55,8 +55,8 @@ Build AI-powered knowledge bases, intelligent assistants, workflow automations, 
 | **Agent Registry**               | ✅     |
 | **Tool Framework**               | ✅     |
 | **Execution Engine (AGENT-003)** | ✅     |
-| **Playground**                   | 🚧     |
-| **Workflow Engine**              | ⏳     |
+| **Playground (AGENT-004)**       | ✅     |
+| **Workflow Engine (AGENT-005)**  | 🚧     |
 
 ---
 

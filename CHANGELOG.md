@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0-beta2] - 2026-07-30
+
+### Added
+- **Frontend Unit Tests (AGENT-004.1)**: Added unit test coverage for the SSE stream chunk parser.
+- **Replay Engine Unit Tests**: Wrote fake timer specs to verify step-by-step playback scheduling, speed controls (0.5x, 1x, 2x, 4x), and timers cleanup behavior.
+- **Playground Stream Integration Test**: Implemented component-level specs asserting simulated stream reads mapping to messages, trace timeline nodes, and metrics inspectors.
+
+### Improved
+- **Robust Event Boundary Parsing**: Hardened split network boundary retention logic inside chunk parser streams.
+- **Replay Timer Cleanup**: Fully synchronized speed-controlled replay queues, ensuring timers are cleared on unmount, exit, and reset states.
+
+---
+
 ## [0.4.0-beta1] - 2026-07-27
 
 ### Added
