@@ -66,6 +66,12 @@ import { ToolLoopService } from "./execution/services/tool-loop.service";
 import { ExecutionRuntimeService } from "./execution/services/execution-runtime.service";
 import { ExecutionController } from "./execution/controllers/execution.controller";
 
+// Workflow Orchestration Components
+import { WorkflowRepository } from "./repositories/workflow.repository";
+import { PrismaWorkflowRepository } from "./repositories/prisma-workflow.repository";
+import { WorkflowService } from "./services/workflow.service";
+import { WorkflowController } from "./controllers/workflow.controller";
+
 @Module({
   imports: [
     DatabaseModule,
@@ -83,6 +89,7 @@ import { ExecutionController } from "./execution/controllers/execution.controlle
     AgentController,
     ToolController,
     ExecutionController,
+    WorkflowController,
   ],
   providers: [
     {
@@ -144,6 +151,13 @@ import { ExecutionController } from "./execution/controllers/execution.controlle
     ExecutionService,
     ToolLoopService,
     ExecutionRuntimeService,
+
+    // Workflows Orchestration
+    {
+      provide: WorkflowRepository,
+      useClass: PrismaWorkflowRepository,
+    },
+    WorkflowService,
   ],
   exports: [
     AiProviderService,
@@ -173,6 +187,10 @@ import { ExecutionController } from "./execution/controllers/execution.controlle
     // Execution Engine
     ExecutionService,
     ExecutionRuntimeService,
+
+    // Workflows Orchestration
+    WorkflowRepository,
+    WorkflowService,
   ],
 })
 export class AiModule implements OnModuleInit {
