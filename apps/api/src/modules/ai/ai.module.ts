@@ -70,6 +70,8 @@ import { ExecutionController } from "./execution/controllers/execution.controlle
 import { WorkflowRepository } from "./repositories/workflow.repository";
 import { PrismaWorkflowRepository } from "./repositories/prisma-workflow.repository";
 import { WorkflowService } from "./services/workflow.service";
+import { WorkflowContextService } from "./services/workflow-context.service";
+import { WorkflowExecutionService } from "./services/workflow-execution.service";
 import { WorkflowController } from "./controllers/workflow.controller";
 
 @Module({
@@ -158,6 +160,8 @@ import { WorkflowController } from "./controllers/workflow.controller";
       useClass: PrismaWorkflowRepository,
     },
     WorkflowService,
+    WorkflowContextService,
+    WorkflowExecutionService,
   ],
   exports: [
     AiProviderService,

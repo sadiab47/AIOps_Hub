@@ -24,6 +24,7 @@ import { MembershipGuard } from "../../../common/auth/membership.guard";
 import { TenantId } from "../../../common/auth/tenant-id.decorator";
 import { CurrentUser } from "../../../common/auth/current-user.decorator";
 import { WorkflowService } from "../services/workflow.service";
+import { WorkflowExecutionService } from "../services/workflow-execution.service";
 import { CreateWorkflowDto, UpdateWorkflowDto } from "../dto/workflow.dto";
 
 @ApiTags("Workflows Orchestrator")
@@ -36,7 +37,10 @@ import { CreateWorkflowDto, UpdateWorkflowDto } from "../dto/workflow.dto";
 @Controller("ai/workflows")
 @UseGuards(JwtAccessGuard, TenantContextGuard, MembershipGuard)
 export class WorkflowController {
-  constructor(private readonly workflowService: WorkflowService) {}
+  constructor(
+    private readonly workflowService: WorkflowService,
+    private readonly workflowExecutionService: WorkflowExecutionService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: "Create a new workflow pipeline" })
@@ -46,7 +50,7 @@ export class WorkflowController {
     @Body() dto: CreateWorkflowDto,
     @CurrentUser() user: any,
   ): Promise<any> {
-    return this.workflowService.create(organizationId, dto, user.id);
+    return this.workflowService.create(organizationId, dto, user.userId);
   }
 
   @Get()
@@ -77,7 +81,7 @@ export class WorkflowController {
     @Body() dto: UpdateWorkflowDto,
     @CurrentUser() user: any,
   ): Promise<any> {
-    return this.workflowService.update(organizationId, id, dto, user.id);
+    return this.workflowService.update(organizationId, id, dto, user.userId);
   }
 
   @Delete(":id")
@@ -90,5 +94,18 @@ export class WorkflowController {
     @Param("id", ParseUUIDPipe) id: string,
   ): Promise<void> {
     await this.workflowService.delete(organizationId, id);
+  }
+
+  @Post(":id/execute")
+  @ApiParam({ name: "id", type: "string", format: "uuid" })
+  @ApiOperation({ summary: "Execute a workflow configuration sequentially (blocking)" })
+  @ApiResponse({ status: 201, description: "Workflow execution completed." })
+  async execute(
+    @TenantId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: { input: any },
+    @CurrentUser() user: any,
+  ): Promise<any> {
+    return this.workflowExecutionService.execute(id, organizationId, user.userId, body.input);
   }
 }
